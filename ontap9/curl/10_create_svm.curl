@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# Title:	00_get_cluster_details.curl
+# Author:	Adrian Bronder
+# Date:		2020-11-03
+# Description:	Get cluster information with simple curl commands
+# URLs:		https://<cluster>/api/svm/svms
+#
+# URLs:		http://docs.netapp.com/ontap-9/index.jsp
+#
+# Sample CLI call:
+# curl -X POST -u "<user>:<password>" https://<cluster>/api/svms/svm -d '["name": "primary_svm_01"}' --insecure
+
+### Vars File
+GLOBAL_VARS=../global.vars
+
+### Step 1 - Read in global variables
+eval "$(jq -r '. | to_entries | .[] | .key + "=\"" + .value + "\""' < $GLOBAL_VARS)"
+
+### Step 2 - Create Auth token
+TOKEN=$(echo -n "$PRI_CLU_USER:$PRI_CLU_PASS" | base64)
+
+### Step 3 - Create SVM
+POST_DATA=`cat <<EOF
+{
+  "name": "$PRI_SVM",
+  "aggregates": [
+    {
+      "name": "$PRI_AGGR"
+    }
+  ],
+  "comment": "SVM created with cURL" 
+}
+EOF`
+
+REST_RESPONSE=`curl -s \
+  -H "accept: application/hal+json" \
+  -H "authorization: Basic $TOKEN" \
+  -X POST \
+  "https://$PRI_CLU/api/svm/svms" \
+  -d "$POST_DATA"`
+
+JOB_URL=$(echo $REST_RESPONSE | jq -r '.job._links.self.href')
+echo "--> Creating SVM with Job: $JOB_URL"
+
+JOB_STATUS="running"
+while [[ $JOB_STATUS == "running" ]]; do
+  JOB_STATUS=`curl -s \
+    -H "accept: application/hal+json" \
+    -H "authorization: Basic $TOKEN" \
+    -X GET \
+    "https://$PRI_CLU/$JOB_URL" | jq -r '.state'`
+  echo "Job in state: $JOB_STATUS"
+  sleep 2
+done

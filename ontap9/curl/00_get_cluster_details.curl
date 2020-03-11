@@ -1,0 +1,87 @@
+#!/bin/bash
+
+# Title:	00_get_cluster_details.curl
+# Author:	Adrian Bronder
+# Date:		2020-11-03
+# Description:	Get cluster information with simple curl commands
+# URLs:		https://<cluster>/api/cluster
+#               https://<cluster>/api/cluster/nodes
+#		https://<cluster>/api/storage/aggregates
+#		https://<cluster>/api/network/ethernet/ports
+#
+# URLs:		http://docs.netapp.com/ontap-9/index.jsp
+#
+# Sample CLI call:
+# curl -X GET -u "<user>:<password>" https://<cluster>/api/cluster --insecure
+
+### Vars File
+GLOBAL_VARS=../global.vars
+
+### Step 1 - Read in global variables
+eval "$(jq -r '. | to_entries | .[] | .key + "=\"" + .value + "\""' < $GLOBAL_VARS)"
+
+### Step 2 - Create Auth token
+TOKEN=$(echo -n "$PRI_CLU_USER:$PRI_CLU_PASS" | base64)
+
+### Step 3 - Get & print cluster details
+REST_RESPONSE=`curl -s \
+  -H "accept: application/hal+json"\
+  -H "authorization: Basic $TOKEN"\
+  -X GET\
+  "https://$PRI_CLU/api/cluster?fields=*"`
+
+echo "--> Printing cluster details"
+echo $REST_RESPONSE | jq -r '
+  "Name:    "+.name+"\n"+
+  "IP:      "+.management_interfaces[0].ip.address+"\n"+
+  "Version: "+.version.full+"\n"'
+
+REST_RESPONSE=`curl -s \
+  -H "accept: application/hal+json"\
+  -H "authorization: Basic $TOKEN"\
+  -X GET\
+  "https://$PRI_CLU/api/cluster/nodes?fields=*"`
+
+echo "--> Printing node details"
+echo $REST_RESPONSE | jq -r '.records[] | [.name, .serial_number, .model] | @tsv' |
+  while IFS=$'\t' read -r NAME SN MODEL; do
+    echo "Name:    "$NAME
+    echo "Serial:  "$SN
+    echo "Model:   "$MODEL
+    echo ""
+  done
+
+REST_RESPONSE=`curl -s \
+  -H "accept: application/hal+json"\
+  -H "authorization: Basic $TOKEN"\
+  -X GET\
+  "https://$PRI_CLU/api/storage/aggregates?fields=*"`
+
+echo "--> Printing aggregate details"
+echo $REST_RESPONSE | jq -r '.records[] | [.name, .home_node.name, .space.block_storage.size, .space.block_storage.used, .state] | @tsv' |
+  while IFS=$'\t' read -r NAME NODE SIZE USED STATE; do
+    echo "Name:    "$NAME
+    echo "Node:    "$NODE
+    echo "Size:    "$SIZE "bytes"
+    echo "Used:    "$USED "bytes"
+    echo "State:   "$STATE
+    echo ""
+  done
+
+REST_RESPONSE=`curl -s \
+  -H "accept: application/hal+json"\
+  -H "authorization: Basic $TOKEN"\
+  -X GET\
+  "https://$PRI_CLU/api/network/ethernet/ports?fields=*"`
+
+echo "--> Printing port details"
+echo $REST_RESPONSE | jq -r '.records[] | [.name, .node.name, .speed, .mtu, .state, .broadcast_domain.name] | @tsv' |
+  while IFS=$'\t' read -r NAME NODE SPEED MTU STATE BCDOMAIN; do
+    echo "Name:    "$NAME
+    echo "Node:    "$NODE
+    echo "Speed:   "$SPEED "MB/s"
+    echo "MTU:     "$MTU
+    echo "State:   "$STATE
+    echo "BCDomain:"$BCDOMAIN
+    echo ""
+  done
