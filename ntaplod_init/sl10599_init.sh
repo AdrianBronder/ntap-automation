@@ -4,7 +4,7 @@
 # Author:	Adrian Bronder
 # Date:		2020-09-03
 # Description:	Prepare linux host "rhel1" in LoD lab sl10599
-#		--> "Exploring the ONTAP REST API v1.1"
+#		--> "Exploring the ONTAP REST API v1.2"
 #
 # URLs:         https://labondemand.netapp.com/lab/sl10599
 #               http://docs.netapp.com/ontap-9/index.jsp
@@ -15,6 +15,19 @@
 echo "--> Updating Red Hat system"
 yum -y update
 
+echo "--> Installing additional packages"
+yum -y install jq
+
+echo "--> Installing ONTAP collection for Ansible"
+ansible-galaxy collection install netapp.ontap
+
+echo "--> Creating aggrgates on primary cluster (cluster 1)"
+$(dirname $0)/sl10599_init_cluster.sh
+
+
+
+### REMOVED FROM 1.1 to 1.2 (already installed in LoD or not relevant anymore):
+: '
 echo "--> Installing additional packages"
 yum -y install epel-release zlib-devel openssl-devel jq
 
@@ -28,7 +41,7 @@ ln -s /usr/local/bin/python3.8 /usr/bin/python3
 ln -s /usr/local/bin/pip3.8 /usr/bin/pip3
 cd ~
 
-echo "--> Upgrading Python pip (for both versions"
+echo "--> Upgrading Python pip (for both versions)"
 pip install --upgrade pip
 pip3 install --upgrade pip
 
@@ -41,9 +54,4 @@ pip3 install netapp-ontap
 
 echo "--> Installing Ansible"
 yum -y install ansible
-
-echo "--> Installing ONTAP collection for Ansible"
-ansible-galaxy collection install netapp.ontap
-
-echo "--> Creating aggrgates on primary cluster (cluster 1)"
-./sl10599_init_cluster.sh
+'
