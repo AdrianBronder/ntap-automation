@@ -1,0 +1,57 @@
+#!/bin/bash
+
+################################################################################
+#
+# Title:	10_create_pri_svm.curl
+# Author:	Adrian Bronder
+# Date:		2020-11-03
+# Description:	Create a primary SVM with simple curl commands
+# APIs:		https://<cluster>/api/svm/svms
+#
+# URLs:		http://docs.netapp.com/ontap-9/index.jsp
+#
+# Sample CLI calls:
+# curl -X POST -u "<user>:<pass>" "https://<cluster>/api/svms/svm" -d '["name": "primary_svm_01"}' --insecure
+# curl -X GET -u "<user>:<pass>" "https://cluster>/api/cluster/jobs/<job_id>" --insecure
+#
+################################################################################
+
+### Step 1 - Read in global variables
+GLOBAL_VARS=$(dirname $0)/../global.vars
+eval "$(jq -r '. | to_entries | .[] | .key + "=\"" + .value + "\""' < $GLOBAL_VARS)"
+
+### Step 2 - Create HTTP headers
+TOKEN=$(echo -n "$PRI_CLU_USER:$PRI_CLU_PASS" | base64)
+HEAD_AUTH="authorization: Basic $TOKEN"
+HEAD_APP="accept: application/hal+json"
+
+
+### Step 3 - Create SVM
+# Execute create operation
+API="https://$PRI_CLU/api/svm/svms"
+POST_DATA=`cat <<EOF
+{
+  "name": "$PRI_SVM",
+  "aggregates": [
+    {
+      "name": "$PRI_AGGR"
+    }
+  ],
+  "comment": "SVM created with cURL" 
+}
+EOF`
+REST_RESPONSE=`curl -s \
+  -H "$HEAD_APP" -H "$HEAD_AUTH" -X POST "$API" -d "$POST_DATA"`
+
+# Monitoring job
+JOB_URL=$(echo $REST_RESPONSE | jq -r '.job._links.self.href')
+echo -e "--> SVM create job was started here:\nhttps://$PRI_CLU$JOB_URL"
+
+JOB_API="https://$PRI_CLU/$JOB_URL"
+JOB_STATUS="running"
+while [[ $JOB_STATUS == "running" ]]; do
+  JOB_STATUS=`curl -s \
+    -H "$HEAD_APP" -H "$HEAD_AUTH" -X GET "$JOB_API" | jq -r '.state'`
+  echo -e "Job in state: $JOB_STATUS"
+  sleep 2
+done
