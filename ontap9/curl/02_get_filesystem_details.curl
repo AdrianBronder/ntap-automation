@@ -1,0 +1,73 @@
+#!/bin/bash
+
+################################################################################
+#
+# Title:	00_get_filesystem_details.curl
+# Author:	Adrian Bronder
+# Date:		2020-16-03
+# Description:	Get cluster information with simple curl commands
+# APIs:		https://<cluster>/api/storage/volumes
+#               https://<cluster>/api/storage/qtrees
+#               https://<cluster>/api/protocols/cifs/shares
+#
+# URLs:		http://docs.netapp.com/ontap-9/index.jsp
+#
+# Sample CLI call:
+# curl -X GET -u "<user>:<password>" "https://<cluster>/api/storage/volumes" --insecure
+#
+################################################################################
+
+
+### Step 1 - Read in global variables
+GLOBAL_VARS=$(dirname $0)/../global.vars
+eval "$(jq -r '. | to_entries | .[] | .key + "=\"" + .value + "\""' < $GLOBAL_VARS)"
+
+
+### Step 2 - Create HTTP headers
+TOKEN=$(echo -n "$PRI_CLU_USER:$PRI_CLU_PASS" | base64)
+HEAD_AUTH="authorization: Basic $TOKEN"
+HEAD_APP="accept: application/hal+json"
+
+
+### Step 3 - Get & print filesystem details 
+# Volumes
+API="https://$PRI_CLU/api/storage/volumes?fields=*"
+echo -e "--> calling $API"
+REST_RESPONSE=`curl -s \
+  -H "$HEAD_APP" -H "$HEAD_AUTH" -X GET "$API"`
+
+echo -e "--> Printing SVM details"
+printf "%-20s %-25s %-15s %-15s\n" "SVM" "Name" "Size" "Used"
+echo -e $REST_RESPONSE | jq -r '.records[] | [.svm.name, .name, .size, .space.used] | @tsv' |
+  while IFS=$'\t' read -r SVM NAME SIZE USED; do
+    printf "%-20s %-25s %-15s %-15s\n" $SVM $NAME $SIZE $USED
+  done
+echo -e ""
+
+# Qtrees
+API="https://$PRI_CLU/api/storage/qtrees?fields=*"
+echo -e "--> calling $API"
+REST_RESPONSE=`curl -s \
+  -H "$HEAD_APP" -H "$HEAD_AUTH" -X GET "$API"`
+
+echo -e "--> Printing qtree details"
+printf "%-20s %-10s %-15s %-35s\n" "SVM" "Style" "Export Policy" "Path"
+echo -e $REST_RESPONSE | jq -r '.records[] | [.svm.name, .security_style, .export_policy.name, .path] | @tsv' |
+  while IFS=$'\t' read -r SVM STYLE EPOLICY PATH; do
+    printf "%-20s %-10s %-15s %-35s\n" $SVM $STYLE $EPOLICY $PATH
+  done
+echo -e ""
+
+# CIFS Shares
+API="https://$PRI_CLU/api/protocols/cifs/shares?fields=*"
+echo -e "--> calling $API"
+REST_RESPONSE=`curl -s \
+  -H "$HEAD_APP" -H "$HEAD_AUTH" -X GET "$API"`
+
+echo -e "--> Printing CIFS share details"
+printf "%-20s %-15s %-35s\n" "SVM" "Share" "Path"
+echo -e $REST_RESPONSE | sed 's/\\/\\\\/g' | jq -r '.records[] | [.svm.name, .name, .path] | @tsv' |
+  while IFS=$'\t' read -r SVM SHARE PATH; do
+    printf "%-20s %-15s %-35s\n" $SVM $SHARE $PATH
+  done
+echo -e ""

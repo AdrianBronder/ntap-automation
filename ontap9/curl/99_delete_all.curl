@@ -27,12 +27,64 @@ HEAD_AUTH="authorization: Basic $TOKEN"
 HEAD_APP="accept: application/hal+json"
 
 
-### Step 3 - Create SVM
+### Step 3 - Delete operations
 # Get SVM ID by name
 API="https://$PRI_CLU/api/svm/svms?name=$PRI_SVM"
 REST_RESPONSE=`curl -s \
   -H "$HEAD_APP" -H "$HEAD_AUTH" -X GET "$API"`
 SVM_ID=`echo $REST_RESPONSE | jq -r '.records[0].uuid'`
+
+# Execute querie-based volume delete
+API="https://$PRI_CLU/api/storage/volumes?name=!*_root&svm.name=$PRI_SVM"
+REST_RESPONSE=`curl -s \
+  -H "$HEAD_APP" -H "$HEAD_AUTH" -X DELETE "$API"`
+
+# API result
+echo -e "--> Volume delete operation(s) started here:"
+echo -e $REST_RESPONSE | jq -r '.jobs[] | [ ._links.self.href ] | @tsv' |
+  while IFS=$'\t' read -r JOB_URL; do
+    echo -e "https://$PRI_CLU$JOB_URL"
+  done
+echo -e $REST_RESPONSE | jq -r '.jobs[] | [._links.self.href] | @tsv' |
+  while IFS=$'\t' read -r JOB_URL; do
+    JOB_API="https://$PRI_CLU/$JOB_URL"
+    JOB_STATUS="running"
+    while [[ $JOB_STATUS == "running" ]]; do
+      JOB_STATUS=`curl -s \
+        -H "$HEAD_APP" -H "$HEAD_AUTH" -X GET "$JOB_API" | jq -r '.state'`
+      echo -e "Job in state: $JOB_STATUS"
+      sleep 2
+    done
+  done
+echo -e ""
+
+# Delete CIFS Server
+API="https://$PRI_CLU/api/protocols/cifs/services/$SVM_ID"
+DELETE_DATA=`cat <<EOF
+{
+  "ad_domain": {
+    "fqdn": "$PRI_AD_DOMAIN",
+    "user": "$PRI_AD_USER",
+    "password": "$PRI_AD_PASS"
+  }
+}
+EOF`
+
+REST_RESPONSE=`curl -s i\
+  -H "$HEAD_APP" -H "$HEAD_AUTH" -X DELETE "$API" -d "$DELETE_DATA"`
+
+# Monitoring job
+JOB_URL=$(echo $REST_RESPONSE | jq -r '.job._links.self.href')
+echo -e "--> CIFS server delete Job was started here:\nhttps://$PRI_CLU$JOB_URL"
+
+JOB_API="https://$PRI_CLU/$JOB_URL"
+JOB_STATUS="running"
+while [[ $JOB_STATUS == "running" ]]; do
+  JOB_STATUS=`curl -s -H "$HEAD_APP" -H "$HEAD_AUTH" -X GET "$JOB_API" | jq -r '.state'`
+  echo -e "Job in state: $JOB_STATUS"
+  sleep 2
+done
+echo -e ""
 
 # Execute deletion of primary SVM
 API="https://$PRI_CLU/api/svm/svms/$SVM_ID"
@@ -50,3 +102,4 @@ while [[ $JOB_STATUS == "running" ]]; do
   echo -e "Job in state: $JOB_STATUS"
   sleep 2
 done
+echo -e ""

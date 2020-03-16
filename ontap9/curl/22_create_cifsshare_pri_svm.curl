@@ -1,0 +1,46 @@
+#!/bin/bash
+
+################################################################################
+#
+# Title:	2_create_cifsshare_pri_svm.curl
+# Author:	Adrian Bronder
+# Date:		2020-16-03
+# Description:	Create qtree on a volume with simple curl commands
+# APIs:		https://<cluster>/api/protocols/cifs/shares
+#
+# URLs:		http://docs.netapp.com/ontap-9/index.jsp
+#
+# Sample CLI calls:
+# curl -X GET -u "<user>:<pass>" "https://<cluster>/api/svm/svms
+# curl -X POST -u "<user>:<pass>" "https://<cluster>/api/protocols/cifs/shares" -d '<json_body>' --insecure
+#
+################################################################################
+
+### Step 1 - Read in global variables
+GLOBAL_VARS=$(dirname $0)/../global.vars
+eval "$(jq -r '. | to_entries | .[] | .key + "=\"" + .value + "\""' < $GLOBAL_VARS)"
+
+### Step 2 - Create HTTP headers
+TOKEN=$(echo -n "$PRI_CLU_USER:$PRI_CLU_PASS" | base64)
+HEAD_AUTH="authorization: Basic $TOKEN"
+HEAD_APP="accept: application/hal+json"
+
+
+### Step 3 - Create CIFS Qtree on SVM
+# Execute POST operation
+API="https://$PRI_CLU/api/protocols/cifs/shares"
+POST_DATA=`cat <<EOF
+{
+  "name": "share_01",
+  "svm": {
+    "name": "$PRI_SVM"
+  },
+  "path": "/${PRI_SVM}_cifs_01/cifs_01/"
+}
+EOF`
+
+echo -e "--> Creating CIFS share on SVM:"
+REST_RESPONSE=`curl -s -w ' %{http_code}' \
+  -H "$HEAD_APP" -H "$HEAD_AUTH" -X POST "$API" -d "$POST_DATA"`
+
+echo -e $REST_RESPONSE

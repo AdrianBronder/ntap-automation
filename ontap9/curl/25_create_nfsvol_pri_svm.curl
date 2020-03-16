@@ -2,17 +2,17 @@
 
 ################################################################################
 #
-# Title:	10_create_pri_svm.curl
+# Title:	22_create_nfsvol_pri_svm.curl
 # Author:	Adrian Bronder
-# Date:		2020-11-03
-# Description:	Create a primary SVM with simple curl commands
-# APIs:		https://<cluster>/api/svm/svms
+# Date:		2020-16-03
+# Description:	Create volume on an SVM with simple curl commands
+# APIs:		https://<cluster>/api/storage/volumes
 #
 # URLs:		http://docs.netapp.com/ontap-9/index.jsp
 #
 # Sample CLI calls:
-# curl -X POST -u "<user>:<pass>" "https://<cluster>/api/svms/svm" -d '<json_body>' --insecure
-# curl -X GET -u "<user>:<pass>" "https://cluster>/api/cluster/jobs/<job_id>" --insecure
+# curl -X GET -u "<user>:<pass>" "https://<cluster>/api/svms/svm
+# curl -X POST -u "<user>:<pass>" "https://<cluster>/api/storage/volumes" -d '<json_body>' --insecure
 #
 ################################################################################
 
@@ -26,18 +26,38 @@ HEAD_AUTH="authorization: Basic $TOKEN"
 HEAD_APP="accept: application/hal+json"
 
 
-### Step 3 - Create SVM
-# Execute create operation
-API="https://$PRI_CLU/api/svm/svms"
+### Step 3 - Create NFS volume on SVM
+# Get SVM ID by name
+API="https://$PRI_CLU/api/svm/svms?name=$PRI_SVM"
+REST_RESPONSE=`curl -s \
+  -H "$HEAD_APP" -H "$HEAD_AUTH" -X GET "$API"`
+SVM_ID=`echo $REST_RESPONSE | jq -r '.records[0].uuid'`
+
+# Execute POST operation
+API="https://$PRI_CLU/api/storage/volumes"
 POST_DATA=`cat <<EOF
 {
-  "name": "$PRI_SVM",
+  "name": "${PRI_SVM}_nfs_01",
+  "svm": {
+    "uuid": "$SVM_ID"
+  },
+  "size": "$VOL_SIZE",
   "aggregates": [
     {
       "name": "$PRI_AGGR"
     }
   ],
-  "comment": "Created with cURL" 
+  "comment": "Volume created with cURL",
+  "guarantee": {
+    "type": "volume"
+  },
+  "nas": {
+    "export_policy": {
+      "name": "default"
+    },
+    "path": "/${PRI_SVM}_nfs_01",
+    "security_style": "unix"
+  }
 }
 EOF`
 
@@ -46,7 +66,7 @@ REST_RESPONSE=`curl -s \
 
 # Monitoring job
 JOB_URL=$(echo $REST_RESPONSE | jq -r '.job._links.self.href')
-echo -e "--> SVM create job was started here:\nhttps://$PRI_CLU$JOB_URL"
+echo -e "--> Volume (NFS) create job was started here:\nhttps://$PRI_CLU$JOB_URL"
 
 JOB_API="https://$PRI_CLU/$JOB_URL"
 JOB_STATUS="running"

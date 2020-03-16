@@ -1,0 +1,66 @@
+#!/bin/bash
+
+################################################################################
+#
+# Title:	11_create_mgmtlif_pri_svm.curl
+# Author:	Adrian Bronder
+# Date:		2020-16-03
+# Description:	Create a management interfaace on an SVM with simple curl commands
+# APIs:		https://<cluster>/api/network/ip/interfaces
+#
+# URLs:		http://docs.netapp.com/ontap-9/index.jsp
+#
+# Sample CLI calls:
+# curl -X GET -u "<user>:<pass>" "https://<cluster>/api/svms/svm
+# curl -X POST -u "<user>:<pass>" "https://<cluster>/api/network/ip/interfaces" -d '<json_body>' --insecure
+#
+################################################################################
+
+### Step 1 - Read in global variables
+GLOBAL_VARS=$(dirname $0)/../global.vars
+eval "$(jq -r '. | to_entries | .[] | .key + "=\"" + .value + "\""' < $GLOBAL_VARS)"
+
+### Step 2 - Create HTTP headers
+TOKEN=$(echo -n "$PRI_CLU_USER:$PRI_CLU_PASS" | base64)
+HEAD_AUTH="authorization: Basic $TOKEN"
+HEAD_APP="accept: application/hal+json"
+
+
+### Step 3 - Create management interface for SVM
+# Get SVM ID by name
+API="https://$PRI_CLU/api/svm/svms?name=$PRI_SVM"
+REST_RESPONSE=`curl -s \
+  -H "$HEAD_APP" -H "$HEAD_AUTH" -X GET "$API"`
+SVM_ID=`echo $REST_RESPONSE | jq -r '.records[0].uuid'`
+
+# Execute POST operation
+API="https://$PRI_CLU/api/network/ip/interfaces"
+POST_DATA=`cat <<EOF
+{
+  "name": "$PRI_SVM",
+  "svm": {
+    "uuid": "$SVM_ID"
+  },
+  "ip": {
+    "address": "$PRI_SVM_IP",
+    "netmask": "$PRI_SVM_NETMASK"
+  },
+  "location": {
+    "home_port": {
+      "name": "$PRI_MGMT_PORT",
+      "node": {
+        "name": "$PRI_NODE"
+      }
+    }
+  },
+  "service_policy": {
+    "name": "default-management"
+  }
+}
+EOF`
+
+echo -e "--> Creating management interface on SVM:"
+REST_RESPONSE=`curl -s -w ' %{http_code}' \
+  -H "$HEAD_APP" -H "$HEAD_AUTH" -X POST "$API" -d "$POST_DATA"`
+
+echo -e $REST_RESPONSE

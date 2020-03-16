@@ -1,10 +1,12 @@
 #!/bin/bash
 
+################################################################################
+#
 # Title:	00_get_cluster_details.curl
 # Author:	Adrian Bronder
 # Date:		2020-11-03
 # Description:	Get cluster information with simple curl commands
-# URLs:		https://<cluster>/api/cluster
+# APIs:		https://<cluster>/api/cluster
 #               https://<cluster>/api/cluster/nodes
 #		https://<cluster>/api/storage/aggregates
 #		https://<cluster>/api/network/ethernet/ports
@@ -12,76 +14,74 @@
 # URLs:		http://docs.netapp.com/ontap-9/index.jsp
 #
 # Sample CLI call:
-# curl -X GET -u "<user>:<password>" https://<cluster>/api/cluster --insecure
+# curl -X GET -u "<user>:<password>" "https://<cluster>/api/cluster" --insecure
+#
+################################################################################
 
-### Vars File
-GLOBAL_VARS=../global.vars
 
 ### Step 1 - Read in global variables
+GLOBAL_VARS=$(dirname $0)/../global.vars
 eval "$(jq -r '. | to_entries | .[] | .key + "=\"" + .value + "\""' < $GLOBAL_VARS)"
 
-### Step 2 - Create Auth token
+
+### Step 2 - Create HTTP headers
 TOKEN=$(echo -n "$PRI_CLU_USER:$PRI_CLU_PASS" | base64)
+HEAD_AUTH="authorization: Basic $TOKEN"
+HEAD_APP="accept: application/hal+json"
 
-### Step 3 - Get & print cluster details
+
+### Step 3 - Get & print cluster details 
+# Cluster
+API="https://$PRI_CLU/api/cluster?fields=*"
+echo -e "--> calling $API"
 REST_RESPONSE=`curl -s \
-  -H "accept: application/hal+json"\
-  -H "authorization: Basic $TOKEN"\
-  -X GET\
-  "https://$PRI_CLU/api/cluster?fields=*"`
+  -H "$HEAD_APP" -H "$HEAD_AUTH" -X GET "$API"`
 
-echo "--> Printing cluster details"
-echo $REST_RESPONSE | jq -r '
+echo -e "--> Printing cluster details"
+echo -e $REST_RESPONSE | jq -r '
   "Name:    "+.name+"\n"+
   "IP:      "+.management_interfaces[0].ip.address+"\n"+
-  "Version: "+.version.full+"\n"'
+  "Version: "+.version.full'
+echo -e ""
 
+# Nodes
+API="https://$PRI_CLU/api/cluster/nodes?fields=*"
+echo -e "--> calling $API"
 REST_RESPONSE=`curl -s \
-  -H "accept: application/hal+json"\
-  -H "authorization: Basic $TOKEN"\
-  -X GET\
-  "https://$PRI_CLU/api/cluster/nodes?fields=*"`
+  -H "$HEAD_APP" -H "$HEAD_AUTH" -X GET "$API"`
 
-echo "--> Printing node details"
-echo $REST_RESPONSE | jq -r '.records[] | [.name, .serial_number, .model] | @tsv' |
+echo -e "--> Printing node details"
+printf "%-15s %-15s %-10s\n" "Name" "Serial" "Model"
+echo -e $REST_RESPONSE | jq -r '.records[] | [.name, .serial_number, .model] | @tsv' |
   while IFS=$'\t' read -r NAME SN MODEL; do
-    echo "Name:    "$NAME
-    echo "Serial:  "$SN
-    echo "Model:   "$MODEL
-    echo ""
+    printf "%-15s %-15s %-10s\n" $NAME $SN $MODEL
   done
+echo -e ""
 
+# Aggregates
+API="https://$PRI_CLU/api/storage/aggregates?fields=*"
+echo -e "--> calling $API"
 REST_RESPONSE=`curl -s \
-  -H "accept: application/hal+json"\
-  -H "authorization: Basic $TOKEN"\
-  -X GET\
-  "https://$PRI_CLU/api/storage/aggregates?fields=*"`
+  -H "$HEAD_APP" -H "$HEAD_AUTH" -X GET "$API"`
 
-echo "--> Printing aggregate details"
-echo $REST_RESPONSE | jq -r '.records[] | [.name, .home_node.name, .space.block_storage.size, .space.block_storage.used, .state] | @tsv' |
+echo -e "--> Printing aggregate details"
+printf "%-20s %-15s %-15s %-15s %-10s\n" "Name" "Node" "Size" "Used" "State"
+echo -e $REST_RESPONSE | jq -r '.records[] | [.name, .home_node.name, .space.block_storage.size, .space.block_storage.used, .state] | @tsv' |
   while IFS=$'\t' read -r NAME NODE SIZE USED STATE; do
-    echo "Name:    "$NAME
-    echo "Node:    "$NODE
-    echo "Size:    "$SIZE "bytes"
-    echo "Used:    "$USED "bytes"
-    echo "State:   "$STATE
-    echo ""
+    printf "%-20s %-15s %-15s %-15s %-10s\n" $NAME $NODE $SIZE $USED $STATE
   done
+echo ""
 
+# Ports
+API="https://$PRI_CLU/api/network/ethernet/ports?fields=*"
+echo -e "--> calling $API"
 REST_RESPONSE=`curl -s \
-  -H "accept: application/hal+json"\
-  -H "authorization: Basic $TOKEN"\
-  -X GET\
-  "https://$PRI_CLU/api/network/ethernet/ports?fields=*"`
+  -H "$HEAD_APP" -H "$HEAD_AUTH" -X GET "$API"`
 
-echo "--> Printing port details"
+echo -e "--> Printing port details"
+printf "%-10s %-15s %-10s %-10s %-10s %-15s\n" "Name" "Node" "Speed" "MTU" "State" "BC Domain"
 echo $REST_RESPONSE | jq -r '.records[] | [.name, .node.name, .speed, .mtu, .state, .broadcast_domain.name] | @tsv' |
   while IFS=$'\t' read -r NAME NODE SPEED MTU STATE BCDOMAIN; do
-    echo "Name:    "$NAME
-    echo "Node:    "$NODE
-    echo "Speed:   "$SPEED "MB/s"
-    echo "MTU:     "$MTU
-    echo "State:   "$STATE
-    echo "BCDomain:"$BCDOMAIN
-    echo ""
+    printf "%-10s %-15s %-10s %-10s %-10s %-15s\n" $NAME $NODE $SPEED $MTU $STATE $BCDOMAIN
   done
+echo -e ""
