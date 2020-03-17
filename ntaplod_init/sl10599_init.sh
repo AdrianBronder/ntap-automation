@@ -1,5 +1,7 @@
 #!/bin/bash
 
+################################################################################
+#
 # Title:	sl10599_init.sh
 # Author:	Adrian Bronder
 # Date:		2020-09-03
@@ -10,7 +12,8 @@
 #               http://docs.netapp.com/ontap-9/index.jsp
 #               https://pypi.org/project/netapp-ontap/
 #               https://galaxy.ansible.com/netapp/ontap
-
+#
+################################################################################
 
 echo "--> Updating Red Hat system"
 yum -y update
@@ -20,6 +23,10 @@ yum -y install jq
 
 echo "--> Installing ONTAP collection for Ansible"
 ansible-galaxy collection install netapp.ontap
+
+echo "--> Creating links for Python3"
+ln -s /usr/local/bin/python3.7 /usr/bin/python3
+ln -s /usr/local/bin/pip3.7 /usr/bin/pip3
 
 echo "--> Creating aggrgates on primary cluster (cluster 1)"
 $(dirname $0)/sl10599_init_cluster.sh

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ################################################################################
 #
@@ -44,7 +44,7 @@ POST_DATA=`cat <<EOF
   "ad_domain": {
     "fqdn": "$PRI_AD_DOMAIN",
     "user": "$PRI_AD_USER",
-	"password": "$PRI_AD_PASS"
+    "password": "$PRI_AD_PASS"
   },
   "comment": "Created with cURL"
 }

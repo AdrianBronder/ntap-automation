@@ -1,11 +1,11 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ################################################################################
 #
 # Title:	01_get_svm_details.curl
 # Author:	Adrian Bronder
 # Date:		2020-16-03
-# Description:	Get cluster information with simple curl commands
+# Description:	Get SVM information with simple curl commands
 # APIs:		https://<cluster>/api/svm/svms
 #               https://<cluster>/api/name-services/dns
 #               https://<cluster>/api/protocols/cifs/services

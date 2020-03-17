@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ################################################################################
 #
-# Title:	14_create_nfs_pri_svm.curl
+# Title:	15_create_nfs_pri_svm.curl
 # Author:	Adrian Bronder
 # Date:		2020-16-03
 # Description:	Create an NFS server on an SVM with simple curl commands

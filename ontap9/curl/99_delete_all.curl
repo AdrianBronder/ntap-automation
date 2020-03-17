@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ################################################################################
 #
@@ -6,7 +6,9 @@
 # Author:       Adrian Bronder
 # Date:         2020-13-03
 # Description:  Clean up the entire demo environment with simple curl commands
-# APIs:         https://<cluster>/api/svm/svms
+# APIs:         https://<cluster>/api/storage/volume
+#		https://<cluster>/api/protocols/cifs/service
+#		https://<cluster>/api/svm/svms
 #
 # URLs:         http://docs.netapp.com/ontap-9/index.jsp
 #

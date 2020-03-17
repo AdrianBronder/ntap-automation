@@ -1,11 +1,11 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ################################################################################
 #
 # Title:	00_get_filesystem_details.curl
 # Author:	Adrian Bronder
 # Date:		2020-16-03
-# Description:	Get cluster information with simple curl commands
+# Description:	Get filesystem information with simple curl commands
 # APIs:		https://<cluster>/api/storage/volumes
 #               https://<cluster>/api/storage/qtrees
 #               https://<cluster>/api/protocols/cifs/shares
