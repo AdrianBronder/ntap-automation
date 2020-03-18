@@ -1,0 +1,74 @@
+#!/usr/bin/env ansible-playbook
+
+################################################################################
+#
+# Title:        01_get_cluster_details.anspl
+# Author:       Adrian Bronder
+# Date:         2020-18-03
+# Description:  Get cluster information
+#               with Ansible modules
+#
+# Modules:      na_ontap_info
+#
+# URLs:         http://docs.netapp.com/ontap-9/index.jsp
+#               https://galaxy.ansible.com/netapp/ontap
+#
+################################################################################
+
+- hosts: localhost
+  gather_facts: false
+  vars:
+    input: &input
+      hostname: "{{ PRI_CLU }}"
+      username: "{{ PRI_CLU_USER }}"
+      password: "{{ PRI_CLU_PASS }}"
+  vars_files:
+    - ../global.vars
+
+  tasks:
+  - name: Get Ontap Info
+    na_ontap_info:
+      state: info
+      <<: *input
+      https: true
+      validate_certs: false
+      use_rest: "Always"
+    register: netapp
+
+  - name: Print cluster details
+    debug:
+      msg:
+        - "Name:     {{ PRI_CLU }}"
+        - "IP:       {{ netapp.ontap_info.net_interface_info.cluster_mgmt.address }}"
+        - "Version:  {{ netapp.ontap_info.ontap_version }}"
+
+  - name: Print node details
+    debug:
+      msg:
+        - "Name:     {{ netapp.ontap_info.cluster_node_info[item].node_name }}"
+    with_items:
+      "{{ netapp.ontap_info.cluster_node_info }}"
+
+  - name: Print aggregate details
+    debug:
+      msg:
+        - "Name:     {{ netapp.ontap_info.aggregate_info[item].aggregate_name }}"
+        - "Node:     {{ netapp.ontap_info.aggregate_info[item].nodes.node_name }}"
+        - "Size:     {{ netapp.ontap_info.aggregate_info[item].aggr_space_attributes.size_total }}"
+        - "Used:     {{ netapp.ontap_info.aggregate_info[item].aggr_space_attributes.size_used }}"
+    with_items:
+      "{{ netapp.ontap_info.aggregate_info }}"
+    when:
+      netapp.ontap_info.aggregate_info[item].aggr_raid_attributes.is_root_aggregate == "false"
+
+  - name: Print port details
+    debug:
+      msg:
+        - "Name:     {{ netapp.ontap_info.net_port_info[item].port }}"
+        - "Node:     {{ netapp.ontap_info.net_port_info[item].node }}"
+        - "Speed:    {{ netapp.ontap_info.net_port_info[item].operational_speed }}"
+        - "MTU:      {{ netapp.ontap_info.net_port_info[item].mtu }}"
+        - "State:    {{ netapp.ontap_info.net_port_info[item].link_status }}"
+        - "BC Domain:{{ netapp.ontap_info.net_port_info[item].broadcast_domain }}"
+    with_items:
+      "{{ netapp.ontap_info.net_port_info }}"

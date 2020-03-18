@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+
+################################################################################
+#
+# Title:	23_create_dns_pri_svm.curl
+# Author:	Adrian Bronder
+# Date:		2020-16-03
+# Description:	Create DNS on primary SVM
+#		with simple curl commands
+#
+# APIs:		https://<cluster>/api/name-services/dns
+#
+# URLs:		http://docs.netapp.com/ontap-9/index.jsp
+#
+# Sample CLI calls:
+# curl -X GET -u "<user>:<pass>" "https://<cluster>/api/svms/svm
+# curl -X POST -u "<user>:<pass>" "https://<cluster>/api/name-services/dns/<svm_id>" -d '<json_body>' --insecure
+#
+################################################################################
+
+
+### Step 1 - Read in global variables
+GLOBAL_VARS=$(dirname $0)/../global.vars
+eval "$(jq -r '. | to_entries | .[] | .key + "=\"" + .value + "\""' < $GLOBAL_VARS)"
+
+### Step 2 - Create HTTP headers
+TOKEN=$(echo -n "$PRI_CLU_USER:$PRI_CLU_PASS" | base64)
+HEAD_AUTH="authorization: Basic $TOKEN"
+HEAD_APP="accept: application/hal+json"
+
+
+### Step 3 - Create operation
+API="https://$PRI_CLU/api/name-services/dns"
+POST_DATA=`cat <<EOF
+{
+  "svm": {
+    "name": "$PRI_SVM"
+  },
+  "domains": [
+    "$PRI_DOMAIN"
+  ],
+  "servers": [
+    "$PRI_DNS1"
+  ]
+}
+EOF`
+
+echo -e "--> Creating DNS configuration on SVM:"
+REST_RESPONSE=`curl -s -w ' %{http_code}' \
+  -H "$HEAD_APP" -H "$HEAD_AUTH" -X POST "$API" -d "$POST_DATA"`
+
+echo -e $REST_RESPONSE
+echo -e ""

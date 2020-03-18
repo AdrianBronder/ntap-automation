@@ -1,0 +1,21 @@
+- hosts: localhost
+  gather_facts: false
+  vars:
+    input: &input
+      hostname: "{{ PRI_CLU }}"
+      username: "{{ PRI_CLU_USER }}"
+      password: "{{ PRI_CLU_PASS }}"
+  vars_files:
+    - ../global.vars
+  tasks:
+  - name: Get Ontap Info
+    na_ontap_info:
+      state: info
+      <<: *input
+      https: true
+      validate_certs: false
+      use_rest: "Always"
+      gather_subset: "net_port_info"
+    register: netapp
+  - debug:
+      msg: "{{ netapp }}"
