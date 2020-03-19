@@ -21,6 +21,9 @@ yum -y update
 echo "--> Installing additional packages"
 yum -y install jq
 
+echo "--> Installing NetApp Python lib (for ZAPI use)"
+pip install netapp_lib
+
 echo "--> Installing ONTAP collection for Ansible"
 ansible-galaxy collection install netapp.ontap
 

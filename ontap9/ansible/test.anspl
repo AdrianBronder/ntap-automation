@@ -7,6 +7,9 @@
       password: "{{ PRI_CLU_PASS }}"
   vars_files:
     - ../global.vars
+  collections:
+    - netapp.ontap
+
   tasks:
   - name: Get Ontap Info
     na_ontap_info:
@@ -15,7 +18,12 @@
       https: true
       validate_certs: false
       use_rest: "Always"
-      gather_subset: "net_port_info"
+#      gather_subset: "net_port_info"
     register: netapp
-  - debug:
-      msg: "{{ netapp }}"
+  - name: Print Ontap Info
+    debug:
+      msg:
+        - "{{ netapp.ontap_info.cluster_identity_info }}"
+        - "{{ netapp.ontap_info.cluster_image_info }}"
+        - "{{ netapp.ontap_info.cluster_node_info }}"
+        - "{{ netapp.ontap_info.ontap_version }}"
