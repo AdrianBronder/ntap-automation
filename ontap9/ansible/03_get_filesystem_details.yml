@@ -1,0 +1,82 @@
+#!/usr/bin/env ansible-playbook
+
+################################################################################
+#
+# Title:        03_get_filesystem_details.yml
+# Author:       Adrian Bronder
+# Date:         2020-19-03
+# Description:  Get filesystem information
+#               with Ansible modules
+#
+# Modules:      na_ontap_info
+#
+# URLs:         http://docs.netapp.com/ontap-9/index.jsp
+#               https://galaxy.ansible.com/netapp/ontap
+#
+################################################################################
+
+- hosts: localhost
+  gather_facts: false
+  vars:
+    input: &input
+      hostname:       "{{ PRI_CLU }}"
+      username:       "{{ PRI_CLU_USER }}"
+      password:       "{{ PRI_CLU_PASS }}"
+      https:          true
+      validate_certs: false
+      use_rest:       "Always"
+  vars_files:
+    - ../global.vars
+  collections:
+    - netapp.ontap
+
+  tasks:
+  - name: Get Ontap Info
+    na_ontap_info:
+      state: info
+      <<: *input
+    register: netapp
+
+# Workaround - qtree currently not included in na_ontap_info
+# Directly calling ONTAP REST API
+  - name: Get Qtree Info
+    uri:
+      url: "https://{{ PRI_CLU }}/api/storage/qtrees?fields=*"
+      validate_certs: false
+      method: GET
+      headers:
+        Accept: application/json
+      url_username: "{{ PRI_CLU_USER }}"
+      url_password: "{{ PRI_CLU_PASS }}"
+    register: qtree_info
+
+  - name: Print volume details
+    debug:
+      msg:
+        - "SVM:       {{ netapp.ontap_info.volume_info[item].volume_id_attributes.owning_vserver_name }}"
+        - "Name:      {{ netapp.ontap_info.volume_info[item].volume_id_attributes.name }}"
+        - "Size:      {{ netapp.ontap_info.volume_info[item].volume_space_attributes.size }}"
+        - "Used:      {{ netapp.ontap_info.volume_info[item].volume_space_attributes.size_used }}"
+    with_items:
+      "{{ netapp.ontap_info.volume_info }}"
+    when:
+      not (netapp.ontap_info.volume_info[item].volume_state_attributes.is_node_root | bool)
+
+  - name: Print qtree details
+    debug:
+      msg:
+        - "SVM:       {{ item.svm.name }}"
+        - "Style:     {{ item.security_style }}"
+        - "Ex Policy: {{ item.export_policy.name }}"
+        - "Path:      {{ item.path }}"
+    with_items:
+      "{{ qtree_info.json.records }}"
+
+  - name: Print CIFS share details
+    debug:
+      msg:
+        - "SVM:       {{ netapp.ontap_info.cifs_share_info[item].vserver }}"
+        - "Name:      {{ netapp.ontap_info.cifs_share_info[item].share_name }}"
+        - "Path:      {{ netapp.ontap_info.cifs_share_info[item].path }}"
+    with_items:
+      "{{ netapp.ontap_info.cifs_share_info }}"

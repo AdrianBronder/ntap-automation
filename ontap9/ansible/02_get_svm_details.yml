@@ -1,0 +1,91 @@
+#!/usr/bin/env ansible-playbook
+
+################################################################################
+#
+# Title:        02_get_svm_details.yml
+# Author:       Adrian Bronder
+# Date:         2020-19-03
+# Description:  Get SVM information
+#               with Ansible modules
+#
+# Modules:      na_ontap_info
+#
+# URLs:         http://docs.netapp.com/ontap-9/index.jsp
+#               https://galaxy.ansible.com/netapp/ontap
+#
+################################################################################
+
+- hosts: localhost
+  gather_facts: false
+  vars:
+    input: &input
+      hostname:       "{{ PRI_CLU }}"
+      username:       "{{ PRI_CLU_USER }}"
+      password:       "{{ PRI_CLU_PASS }}"
+      https:          true
+      validate_certs: false
+      use_rest:       "Always"
+  vars_files:
+    - ../global.vars
+  collections:
+    - netapp.ontap
+
+  tasks:
+  - name: Get Ontap Info
+    na_ontap_info:
+      state: info
+      <<: *input
+    register: netapp
+
+  - name: Print SVM details
+    debug:
+      msg:
+        - "Name:      {{ netapp.ontap_info.vserver_info[item].vserver_name }}"
+        - "IPspace:   {{ netapp.ontap_info.vserver_info[item].ipspace }}"
+        - "State:     {{ netapp.ontap_info.vserver_info[item].state }}"
+        - "Comment:   {{ netapp.ontap_info.vserver_info[item].comment }}"
+    with_items:
+      "{{ netapp.ontap_info.vserver_info }}"
+    when:
+      netapp.ontap_info.vserver_info[item].vserver_type == "data"
+
+  - name: Print network interface details
+    debug:
+      msg:
+        - "SVM:       {{ netapp.ontap_info.net_interface_info[item].vserver }}"
+        - "Name:      {{ netapp.ontap_info.net_interface_info[item].interface_name }}"
+        - "IP:        {{ netapp.ontap_info.net_interface_info[item].address }}/{{ netapp.ontap_info.net_interface_info[item].netmask_length }}"
+        - "Curr Port: {{ netapp.ontap_info.net_interface_info[item].current_node }}:{{ netapp.ontap_info.net_interface_info[item].current_port }}"
+    with_items:
+      "{{ netapp.ontap_info.net_interface_info }}"
+    when:
+      netapp.ontap_info.net_interface_info[item].ipspace != "Cluster"
+
+  - name: Print DNS details
+    debug:
+      msg:
+        - "SVM:       {{ netapp.ontap_info.net_dns_info[item].vserver_name }}"
+        - "Domains:   {{ netapp.ontap_info.net_dns_info[item].domains.values() | list }}"
+        - "Servers:   {{ netapp.ontap_info.net_dns_info[item].name_servers.values() | list }}"
+    with_items:
+      "{{ netapp.ontap_info.net_dns_info }}"
+
+  - name: Print CIFS details
+    debug:
+      msg:
+        - "SVM:       {{ netapp.ontap_info.cifs_server_info[item].vserver }}"
+        - "Name:      {{ netapp.ontap_info.cifs_server_info[item].cifs_server }}"
+        - "AD Domain: {{ netapp.ontap_info.cifs_server_info[item].domain }}"
+        - "Comment:   {{ netapp.ontap_info.cifs_server_info[item].comment }}"
+    with_items:
+      "{{ netapp.ontap_info.cifs_server_info }}"
+
+  - name: Print NFS details
+    debug:
+      msg:
+        - "SVM:       {{ netapp.ontap_info.nfs_info[item].vserver }}"
+        - "v3:        {{ netapp.ontap_info.nfs_info[item].is_nfsv3_enabled }}"
+        - "v4.0:      {{ netapp.ontap_info.nfs_info[item].is_nfsv40_enabled }}"
+        - "v4.0:      {{ netapp.ontap_info.nfs_info[item].is_nfsv41_enabled }}"
+    with_items:
+      "{{ netapp.ontap_info.nfs_info }}"
