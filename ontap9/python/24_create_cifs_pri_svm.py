@@ -47,7 +47,7 @@ cifs = CifsService.from_dict(
     "user": global_vars["PRI_AD_USER"],
     "password": global_vars["PRI_AD_PASS"]
   },
-  "comment": "Created with ONTAP PYL"
+  "comment": "Created with ONTAP PCL"
 })
 
 print("--> Starting CIFS create operation")

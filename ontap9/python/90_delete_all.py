@@ -19,12 +19,9 @@
 ################################################################################
 
 import json, os, sys, logging
-from netapp_ontap import config, HostConnection, NetAppRestError, config, utils
+from netapp_ontap import config, HostConnection, NetAppRestError
 from netapp_ontap.resources import Volume, CifsService, Svm
 
-logging.basicConfig(level=logging.DEBUG)
-utils.DEBUG = 1
-utils.LOG_ALL_API_CALLS = 1
 
 ### Step 1 - Read in global variables
 with open('../global.vars') as json_file:
@@ -41,43 +38,41 @@ config.CONNECTION = HostConnection(
 
 
 ### Step 3 - Delete operation
+# Volume
 print("--> Starting volume delete operation")
-for volume in Volume.get_collection(
-	**{"svm.name":global_vars["PRI_SVM"], "name":"!*_root"}):
-	try:
+try:
+	for volume in Volume.get_collection(
+		**{"svm.name":global_vars["PRI_SVM"], "name":"!*_root"}):
 		volume.delete()
 		print("--> Volume {} deleted successfully".format(volume.name))
-	except NetAppRestError as err:
-		print("--> Error: Volume was not deleted:\n{}".format(err))
+except NetAppRestError as err:
+	print("--> Error: Volume was not deleted:\n{}".format(err))
 print("")
 
+# CIFS Server
 print("--> Starting CIFS server delete operation")
 try:
-	cifs = CifsService.find(name="PRIMARY_SVM_01")
-	cifs.from_dict(
-	{
-	  "svm": {
-	    "name": global_vars["PRI_SVM"]
-	  },
-	  "ad_domain": {
-	    "fqdn": global_vars["PRI_AD_DOMAIN"],
-	    "user": global_vars["PRI_AD_USER"], 
-	    "password": global_vars["PRI_AD_PASS"]
-	  }
-	})
-	cifs.delete()
-	print("--> CIFS server {} deleted successfully".format(cifs.name))
+	cifs = CifsService.find(name=global_vars["PRI_SVM"])
+	if cifs:
+		cifs.delete(body={
+			"ad_domain": {
+				"fqdn": global_vars["PRI_AD_DOMAIN"],
+				"user": global_vars["PRI_AD_USER"], 
+				"password": global_vars["PRI_AD_PASS"]
+			}
+		})
+		print("--> CIFS server {} deleted successfully".format(cifs.name))
 except NetAppRestError as err:
 	print("--> Error: CIFS server was not deleted:\n{}".format(err))
 print("")
 
-"""
+# SVM
 print("--> Starting SVM delete operation")
-svm = Svm.find(**{"name": global_vars["PRI_SVM"]})
 try:
-	svm.delete()
-	print("--> SVM {} deleted successfully".format(svm.name))
+	svm = Svm.find(**{"name": global_vars["PRI_SVM"]})
+	if svm:
+		svm.delete()
+		print("--> SVM {} deleted successfully".format(svm.name))
 except NetAppRestError as err:
 	print("--> Error: SVM was not deleted:\n{}".format(err))
 print("")
-"""

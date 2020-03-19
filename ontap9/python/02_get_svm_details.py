@@ -99,8 +99,8 @@ for cifs in CifsService.get_collection():
 	))
 print("")
 
-# CIFS
-print("--> Printing CIFS details")
+# NFS
+print("--> Printing NFS details")
 print("{:<20}{:<10}{:<10}{:<10}{:<10}".format(
         "SVM", "State", "v3", "v4.0", "v4.1")
 )
