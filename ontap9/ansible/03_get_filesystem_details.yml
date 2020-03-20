@@ -13,6 +13,10 @@
 # URLs:         http://docs.netapp.com/ontap-9/index.jsp
 #               https://galaxy.ansible.com/netapp/ontap
 #
+# Built-in help:
+# ansible-doc netapp.ontap.na_ontap_info
+# ansible-doc uri
+#
 ################################################################################
 
 - hosts: localhost
@@ -80,3 +84,5 @@
         - "Path:      {{ netapp.ontap_info.cifs_share_info[item].path }}"
     with_items:
       "{{ netapp.ontap_info.cifs_share_info }}"
+    when:
+      - item != ""

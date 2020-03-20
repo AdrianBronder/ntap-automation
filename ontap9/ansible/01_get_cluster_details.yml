@@ -13,6 +13,9 @@
 # URLs:         http://docs.netapp.com/ontap-9/index.jsp
 #               https://galaxy.ansible.com/netapp/ontap
 #
+# Built-in help:
+# ansible-doc netapp.ontap.na_ontap_info
+#
 ################################################################################
 
 - hosts: localhost

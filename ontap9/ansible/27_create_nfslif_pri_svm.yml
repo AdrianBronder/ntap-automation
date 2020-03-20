@@ -1,0 +1,51 @@
+#!/usr/bin/env ansible-playbook
+
+################################################################################
+#
+# Title:        27_create_nfslif_pri_svm.yml
+# Author:       Adrian Bronder
+# Date:         2020-20-03
+# Description:  Create NFS interface on primary SVM
+#               with Ansible modules
+#
+# Modules:      na_ontap_interface
+#
+# URLs:         http://docs.netapp.com/ontap-9/index.jsp
+#               https://galaxy.ansible.com/netapp/ontap
+#
+# Built-in help:
+# ansible-doc netapp.ontap.na_ontap_interface
+#
+################################################################################
+
+- hosts: localhost
+  gather_facts: false
+  vars:
+    input: &input
+      hostname:       "{{ PRI_CLU }}"
+      username:       "{{ PRI_CLU_USER }}"
+      password:       "{{ PRI_CLU_PASS }}"
+      https:          true
+      validate_certs: false
+      use_rest:       Always
+  vars_files:
+    - ../global.vars
+  collections:
+    - netapp.ontap
+
+  tasks:
+  - name: Create NFS interface on primary SVM
+    na_ontap_interface:
+      state:                 present
+      interface_name:        "{{ PRI_SVM }}_nfs_01"
+      vserver:               "{{ PRI_SVM }}"
+      address:               "{{ PRI_SVM_NFS_IP }}"
+      netmask:               "{{ PRI_SVM_NFS_NETMASK }}"
+      home_node:             "{{ PRI_NODE }}"
+      home_port:             "{{ PRI_DATA_PORT }}"
+      <<: *input
+# FIXME - service_policy added in later release of module collection (20.4.0)
+#      service_policy:        "default-management"
+# Therefore for now firewall_policy and role here:
+      firewall_policy:       data
+      role:                  data

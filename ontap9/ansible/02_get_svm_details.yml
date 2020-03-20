@@ -13,6 +13,9 @@
 # URLs:         http://docs.netapp.com/ontap-9/index.jsp
 #               https://galaxy.ansible.com/netapp/ontap
 #
+# Built-in help:
+# ansible-doc netapp.ontap.na_ontap_info
+#
 ################################################################################
 
 - hosts: localhost
@@ -79,6 +82,8 @@
         - "Comment:   {{ netapp.ontap_info.cifs_server_info[item].comment }}"
     with_items:
       "{{ netapp.ontap_info.cifs_server_info }}"
+    when:
+      - item != ""
 
   - name: Print NFS details
     debug:
@@ -89,3 +94,5 @@
         - "v4.0:      {{ netapp.ontap_info.nfs_info[item].is_nfsv41_enabled }}"
     with_items:
       "{{ netapp.ontap_info.nfs_info }}"
+    when:
+      - item != ""

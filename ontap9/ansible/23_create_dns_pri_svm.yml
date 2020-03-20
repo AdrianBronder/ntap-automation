@@ -1,0 +1,43 @@
+#!/usr/bin/env ansible-playbook
+
+################################################################################
+#
+# Title:        23_create_dns_pri_svm.yml
+# Author:       Adrian Bronder
+# Date:         2020-20-03
+# Description:  Create DNS on primary SVM
+#               with Ansible modules
+#
+# Modules:      na_ontap_dns
+#
+# URLs:         http://docs.netapp.com/ontap-9/index.jsp
+#               https://galaxy.ansible.com/netapp/ontap
+#
+# Built-in help:
+# ansible-doc netapp.ontap.na_ontap_dns
+#
+################################################################################
+
+- hosts: localhost
+  gather_facts: false
+  vars:
+    input: &input
+      hostname:       "{{ PRI_CLU }}"
+      username:       "{{ PRI_CLU_USER }}"
+      password:       "{{ PRI_CLU_PASS }}"
+      https:          true
+      validate_certs: false
+      use_rest:       Always
+  vars_files:
+    - ../global.vars
+  collections:
+    - netapp.ontap
+
+  tasks:
+  - name: Create DNS on primary SVM
+    na_ontap_dns:
+      state:                 present
+      vserver:               "{{ PRI_SVM }}"
+      domains:               "{{ PRI_DOMAIN }}"
+      nameservers:           "{{ PRI_DNS1 }}"
+      <<: *input
