@@ -25,7 +25,7 @@ from netapp_ontap.resources import Cluster, Node, Aggregate, Port
 
 
 ### Step 1 - Read in global variables
-with open('../global.vars') as json_file:
+with open(os.path.dirname(sys.argv[0])+'/../global.vars') as json_file:
 	global_vars = json.load(json_file)
 
 
