@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+
+################################################################################
+#
+# Title:	53_create_cluster_peer.curl
+# Author:	Adrian Bronder
+# Date:		2020-04-07
+# Description:	Create peering between primary and secondary cluster
+#		with simple curl commands
+#
+# APIs:		/api/cluster/peers
+#
+# URLs:		https://docs.netapp.com/ontap-9/index.jsp
+#               https://<cluster>/docs/api
+#
+# Sample CLI calls:
+# curl -X POST -u "<user>:<pass>" "https://<cluster>/api/cluster/peers" -d '<json_body>' --insecure
+#
+################################################################################
+
+
+### Step 1 - Read in global variables
+GLOBAL_VARS=$(dirname $0)/../global.vars
+eval "$(jq -r '. | to_entries | .[] | .key + "=\"" + .value + "\""' < $GLOBAL_VARS)"
+
+
+### Step 2 - Create HTTP headers
+TOKEN=$(echo -n "$PRI_CLU_USER:$PRI_CLU_PASS" | base64)
+HEAD_AUTH="authorization: Basic $TOKEN"
+HEAD_APP="accept: application/hal+json"
+
+
+### Step 3 - Create operation
+# NOTE: A dedicated IPspace es definitely recommended for intercluster traffic!
+#       For simplicity reasons, the Default IPspace is used in this demo.
+API="https://$PRI_CLU/api/cluster/peers"
+POST_DATA=`cat <<EOF
+{
+  "peer_applications": [
+    "snapmirror"
+  ],
+  "authentication": {
+    "in_use": "ok",
+    "passphrase": "randompassphrasehere"
+  },
+  "remote": {
+    "ip_addresses": [
+      "$SEC_CLU_IC1_IP"
+    ]
+  },
+  "ipspace": {
+    "name": "Default"
+  }
+}
+EOF`
+
+echo -e "--> Creating peering on $PRI_CLU:"
+REST_RESPONSE=`curl -s -w ' %{http_code}' \
+  -H "$HEAD_APP" -H "$HEAD_AUTH" -X POST "$API" -d "$POST_DATA"`
+
+echo -e $REST_RESPONSE
+echo -e ""
+
+API="https://$SEC_CLU/api/cluster/peers"
+POST_DATA=`cat <<EOF
+{
+  "peer_applications": [
+    "snapmirror"
+  ],
+  "authentication": {
+    "in_use": "ok",
+    "passphrase": "randompassphrasehere"
+  },
+  "remote": {
+    "ip_addresses": [
+      "$PRI_CLU_IC1_IP",
+      "$PRI_CLU_IC2_IP"
+    ]
+  },
+  "ipspace": {
+    "name": "Default"
+  }
+}
+EOF`
+
+echo -e "--> Creating peering on $SEC_CLU:"
+REST_RESPONSE=`curl -s -w ' %{http_code}' \
+  -H "$HEAD_APP" -H "$HEAD_AUTH" -X POST "$API" -d "$POST_DATA"`
+
+echo -e $REST_RESPONSE
+echo -e ""

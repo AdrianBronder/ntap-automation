@@ -4,7 +4,7 @@
 #
 # Title:        25_create_cifslif_pri_svm.py
 # Author:       Adrian Bronder
-# Date:         2020-20-03
+# Date:         2020-03-20
 # Description:  Create CIFS interface on primary SVM
 #               with Ansible modules
 #
@@ -41,7 +41,7 @@
       vserver:               "{{ PRI_SVM }}"
       address:               "{{ PRI_SVM_CIFS_IP }}"
       netmask:               "{{ PRI_SVM_CIFS_NETMASK }}"
-      home_node:             "{{ PRI_NODE }}"
+      home_node:             "{{ PRI_CLU_NODE1 }}"
       home_port:             "{{ PRI_DATA_PORT }}"
       <<: *input
 # FIXME - service_policy added in later release of module collection (20.4.0)

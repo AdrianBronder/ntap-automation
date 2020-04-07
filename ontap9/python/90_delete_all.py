@@ -4,7 +4,7 @@
 #
 # Title:	90_delete_all.py
 # Author:	Adrian Bronder
-# Date:		2020-17-03
+# Date:		2020-03-17
 # Description:	Clean up the entire environment
 #		with ONTAP Python client library
 #

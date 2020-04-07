@@ -4,7 +4,7 @@
 #
 # Title:        90_delete_all.yml 
 # Author:       Adrian Bronder
-# Date:         2020-20-03
+# Date:         2020-03-20
 # Description:  Clean up the entire environment
 #               with Ansible modules
 #

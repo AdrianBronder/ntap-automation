@@ -2,17 +2,16 @@
 
 ################################################################################
 #
-# Title:	27_create_nfslif_pri_svm.curl
+# Title:	52_create_iclif_sec_clu.curl
 # Author:	Adrian Bronder
-# Date:		2020-03-16
-# Description:	Create a NFS interface on primary SVM
+# Date:		2020-04-07
+# Description:	Create interconnect LIFs on secondary cluster
 #		with simple curl commands
 #
 # APIs:		/api/network/ip/interfaces
 #
 # URLs:		https://docs.netapp.com/ontap-9/index.jsp
 #               https://<cluster>/docs/api
-
 #
 # Sample CLI calls:
 # curl -X POST -u "<user>:<pass>" "https://<cluster>/api/network/ip/interfaces" -d '<json_body>' --insecure
@@ -26,38 +25,40 @@ eval "$(jq -r '. | to_entries | .[] | .key + "=\"" + .value + "\""' < $GLOBAL_VA
 
 
 ### Step 2 - Create HTTP headers
-TOKEN=$(echo -n "$PRI_CLU_USER:$PRI_CLU_PASS" | base64)
+TOKEN=$(echo -n "$SEC_CLU_USER:$SEC_CLU_PASS" | base64)
 HEAD_AUTH="authorization: Basic $TOKEN"
 HEAD_APP="accept: application/hal+json"
 
 
-### Step 3 - Create opeartion
-API="https://$PRI_CLU/api/network/ip/interfaces"
+### Step 3 - Create operation
+# NOTE: A dedicated IPspace es definitely recommended for intercluster traffic!
+#       For simplicity reasons, the Default IPspace is used in this demo.
+API="https://$SEC_CLU/api/network/ip/interfaces"
 POST_DATA=`cat <<EOF
 {
-  "name": "${PRI_SVM}_nfs_01",
-  "svm": {
-    "name": "$PRI_SVM"
+  "name": "$(echo $SEC_CLU | cut -d. -f1)_ic_01",
+  "ipspace": {
+    "name": "Default"
   },
   "ip": {
-    "address": "$PRI_SVM_NFS_IP",
-    "netmask": "$PRI_SVM_NFS_NETMASK"
+    "address": "$SEC_CLU_IC1_IP",
+    "netmask": "$SEC_CLU_IC1_NETMASK"
   },
   "location": {
     "home_port": {
-      "name": "$PRI_DATA_PORT",
+      "name": "$SEC_DATA_PORT",
       "node": {
-        "name": "$PRI_CLU_NODE1"
+        "name": "$SEC_CLU_NODE1"
       }
     }
   },
   "service_policy": {
-    "name": "default-data-files"
+    "name": "default-intercluster"
   }
 }
 EOF`
 
-echo -e "--> Creating NFS interface on SVM:"
+echo -e "--> Creating intercluster interface #1:"
 REST_RESPONSE=`curl -s -w ' %{http_code}' \
   -H "$HEAD_APP" -H "$HEAD_AUTH" -X POST "$API" -d "$POST_DATA"`
 

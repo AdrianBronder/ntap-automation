@@ -4,7 +4,7 @@
 #
 # Title:        02_get_svm_details.yml
 # Author:       Adrian Bronder
-# Date:         2020-19-03
+# Date:         2020-03-19
 # Description:  Get SVM information
 #               with Ansible modules
 #
@@ -37,6 +37,12 @@
   - name: Get Ontap Info
     na_ontap_info:
       state: info
+      gather_subset:
+        - vserver_info
+        - net_interface_info
+        - net_dns_info
+        - cifs_server_info
+        - nfs_info
       <<: *input
     register: netapp
 

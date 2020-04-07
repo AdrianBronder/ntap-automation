@@ -4,7 +4,7 @@
 #
 # Title:        01_get_cluster_details.yml
 # Author:       Adrian Bronder
-# Date:         2020-18-03
+# Date:         2020-03-18
 # Description:  Get cluster information
 #               with Ansible modules
 #
@@ -37,6 +37,13 @@
   - name: Get Ontap Info
     na_ontap_info:
       state: info
+      gather_subset:
+        - cluster_identity_info
+        - net_interface_info
+        - cluster_image_info
+        - cluster_node_info
+        - aggregate_info
+        - net_port_info
       <<: *input
     register: netapp
 

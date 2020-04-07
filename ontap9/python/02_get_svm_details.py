@@ -4,7 +4,7 @@
 #
 # Title:	02_get_svm_details.py
 # Author:	Adrian Bronder
-# Date:		2020-17-03
+# Date:		2020-03-17
 # Description:	Get SVM information
 #		with ONTAP Python client library
 #

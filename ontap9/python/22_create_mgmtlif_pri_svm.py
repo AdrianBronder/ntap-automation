@@ -4,7 +4,7 @@
 #
 # Title:	22_create_mgmtlif_pri_svm.py
 # Author:	Adrian Bronder
-# Date:		2020-17-03
+# Date:		2020-03-17
 # Description:	Create management interface on primary SVM
 #		with ONTAP Python client library
 #
@@ -50,7 +50,7 @@ lif = IpInterface.from_dict(
     "home_port": {
       "name": global_vars["PRI_MGMT_PORT"],
       "node": {
-        "name": global_vars["PRI_NODE"]
+        "name": global_vars["PRI_CLU_NODE1"]
       }
     }
   },

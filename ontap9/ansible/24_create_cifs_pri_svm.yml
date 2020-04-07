@@ -4,7 +4,7 @@
 #
 # Title:        24_create_cifs_pri_svm.yml
 # Author:       Adrian Bronder
-# Date:         2020-20-03
+# Date:         2020-03-20
 # Description:  Create CIFS server on primary SVM
 #               with Ansible modules
 #

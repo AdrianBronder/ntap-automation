@@ -4,16 +4,16 @@
 #
 # Title:	36_create_nfsvol_pri_svm.curl
 # Author:	Adrian Bronder
-# Date:		2020-16-03
+# Date:		2020-03-16
 # Description:	Create volume on primary SVM
 #		with simple curl commands
 #
-# APIs:		https://<cluster>/api/storage/volumes
+# APIs:		/api/storage/volumes
 #
-# URLs:		http://docs.netapp.com/ontap-9/index.jsp
+# URLs:		https://docs.netapp.com/ontap-9/index.jsp
+#               https://<cluster>/docs/api
 #
 # Sample CLI calls:
-# curl -X GET -u "<user>:<pass>" "https://<cluster>/api/svms/svm
 # curl -X POST -u "<user>:<pass>" "https://<cluster>/api/storage/volumes" -d '<json_body>' --insecure
 #
 ################################################################################

@@ -4,16 +4,17 @@
 #
 # Title:	01_get_cluster_details.curl
 # Author:	Adrian Bronder
-# Date:		2020-11-03
+# Date:		2020-03-11
 # Description:	Get cluster information
 #		with simple curl commands
 #
-# APIs:		https://<cluster>/api/cluster
-#               https://<cluster>/api/cluster/nodes
-#		https://<cluster>/api/storage/aggregates
-#		https://<cluster>/api/network/ethernet/ports
+# APIs:		/api/cluster
+#               /api/cluster/nodes
+#		/api/storage/aggregates
+#		/api/network/ethernet/ports
 #
-# URLs:		http://docs.netapp.com/ontap-9/index.jsp
+# URLs:		https://docs.netapp.com/ontap-9/index.jsp
+#               https://<cluster>/docs/api
 #
 # Sample CLI call:
 # curl -X GET -u "<user>:<password>" "https://<cluster>/api/cluster" --insecure

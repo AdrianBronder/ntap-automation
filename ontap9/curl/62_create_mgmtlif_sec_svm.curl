@@ -2,19 +2,19 @@
 
 ################################################################################
 #
-# Title:	26_create_nfs_pri_svm.curl
+# Title:	52_create_mgmtlif_pri_svm.curl
 # Author:	Adrian Bronder
-# Date:		2020-03-16
-# Description:	Create NFS server on primary SVM
+# Date:		2020-04-07
+# Description:	Create a management interface on secondary SVM
 #		with simple curl commands
 #
-# APIs:		/api/protocols/nfs/services
+# APIs:		/api/network/ip/interfaces
 #
 # URLs:		https://docs.netapp.com/ontap-9/index.jsp
 #               https://<cluster>/docs/api
 #
 # Sample CLI calls:
-# curl -X POST -u "<user>:<pass>" "https://<cluster>/api/protocols/nfs/services" -d '<json_body>' --insecure
+# curl -X POST -u "<user>:<pass>" "https://<cluster>/api/network/ip/interfaces" -d '<json_body>' --insecure
 #
 ################################################################################
 
@@ -25,28 +25,38 @@ eval "$(jq -r '. | to_entries | .[] | .key + "=\"" + .value + "\""' < $GLOBAL_VA
 
 
 ### Step 2 - Create HTTP headers
-TOKEN=$(echo -n "$PRI_CLU_USER:$PRI_CLU_PASS" | base64)
+TOKEN=$(echo -n "$SEC_CLU_USER:$SEC_CLU_PASS" | base64)
 HEAD_AUTH="authorization: Basic $TOKEN"
 HEAD_APP="accept: application/hal+json"
 
 
 ### Step 3 - Create operation
-API="https://$PRI_CLU/api/protocols/nfs/services"
+API="https://$SEC_CLU/api/network/ip/interfaces"
 POST_DATA=`cat <<EOF
 {
+  "name": "$SEC_SVM",
   "svm": {
-    "name": "$PRI_SVM"
+    "name": "$SEC_SVM"
   },
-  "enabled": "true",
-  "protocol": {
-    "v3_enabled": "true",
-    "v40_enabled": "false",
-    "v41_enabled": "false"
+  "ip": {
+    "address": "$SEC_SVM_IP",
+    "netmask": "$SEC_SVM_NETMASK"
+  },
+  "location": {
+    "home_port": {
+      "name": "$SEC_MGMT_PORT",
+      "node": {
+        "name": "$SEC_NODE"
+      }
+    }
+  },
+  "service_policy": {
+    "name": "default-management"
   }
 }
 EOF`
 
-echo -e "--> Creating NFS server on SVM:"
+echo -e "--> Creating management interface on SVM:"
 REST_RESPONSE=`curl -s -w ' %{http_code}' \
   -H "$HEAD_APP" -H "$HEAD_AUTH" -X POST "$API" -d "$POST_DATA"`
 

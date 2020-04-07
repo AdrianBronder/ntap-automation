@@ -4,7 +4,7 @@
 #
 # Title:        33_create_cifsshare_pri_svm.yml
 # Author:       Adrian Bronder
-# Date:         2020-20-03
+# Date:         2020-03-20
 # Description:  Create CIFS share on primary SVM
 #               with Ansible modules
 #
@@ -37,7 +37,7 @@
   - name: Create CIFS share on primary SVM
     na_ontap_cifs:
       state:                 present
-      name:                  "share_01"
+      share_name:            "share_01"
       vserver:               "{{ PRI_SVM }}"
       path:                  "/{{ PRI_SVM }}_cifs_01/cifs_01/"
       <<: *input

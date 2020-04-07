@@ -4,16 +4,16 @@
 #
 # Title:	33_create_cifsshare_pri_svm.curl
 # Author:	Adrian Bronder
-# Date:		2020-16-03
+# Date:		2020-03-16
 # Description:	Create CIFS share on primary SVM
 #		with simple curl commands
 #		
-# APIs:		https://<cluster>/api/protocols/cifs/shares
+# APIs:		/api/protocols/cifs/shares
 #
-# URLs:		http://docs.netapp.com/ontap-9/index.jsp
+# URLs:		https://docs.netapp.com/ontap-9/index.jsp
+#               https://<cluster>/docs/api
 #
 # Sample CLI calls:
-# curl -X GET -u "<user>:<pass>" "https://<cluster>/api/svm/svms
 # curl -X POST -u "<user>:<pass>" "https://<cluster>/api/protocols/cifs/shares" -d '<json_body>' --insecure
 #
 ################################################################################

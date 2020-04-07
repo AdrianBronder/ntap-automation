@@ -4,16 +4,16 @@
 #
 # Title:	37_create_nfsqtree_pri_svm.curl
 # Author:	Adrian Bronder
-# Date:		2020-16-03
+# Date:		2020-03-16
 # Description:	Create qtree on primary SVM
 #		with simple curl commands
 #
-# APIs:		https://<cluster>/api/storage/qtrees
+# APIs:		/api/storage/qtrees
 #
-# URLs:		http://docs.netapp.com/ontap-9/index.jsp
+# URLs:		https://docs.netapp.com/ontap-9/index.jsp
+#               https://<cluster>/docs/api
 #
 # Sample CLI calls:
-# curl -X GET -u "<user>:<pass>" "https://<cluster>/api/storage/volumes
 # curl -X POST -u "<user>:<pass>" "https://<cluster>/api/storage/qtrees" -d '<json_body>' --insecure
 #
 ################################################################################

@@ -4,7 +4,7 @@
 #
 # Title:        03_get_filesystem_details.yml
 # Author:       Adrian Bronder
-# Date:         2020-19-03
+# Date:         2020-03-19
 # Description:  Get filesystem information
 #               with Ansible modules
 #
@@ -38,11 +38,16 @@
   - name: Get Ontap Info
     na_ontap_info:
       state: info
+      gather_subset:
+        - volume_info
+        - qtree_info
+        - cifs_share_info
       <<: *input
     register: netapp
 
 # Workaround - qtree currently not included in na_ontap_info
 # Directly calling ONTAP REST API
+# FIXME - qtree_info available since collection 20.4.0 - needs to be changed
   - name: Get Qtree Info
     uri:
       url: "https://{{ PRI_CLU }}/api/storage/qtrees?fields=*"

@@ -2,20 +2,20 @@
 
 ################################################################################
 #
-# Title:	24_create_cifs_pri_svm.curl
+# Title:	51_create_sec_svm.curl
 # Author:	Adrian Bronder
-# Date:		2020-03-16
-# Description:	Create CIFS server on primary SVM
+# Date:		2020-04-07
+# Description:	Create secondary SVM
 #		with simple curl commands
 #
-# APIs:		/api/protocols/cifs/services
+# APIs:		/api/svm/svms
 #
 # URLs:		https://docs.netapp.com/ontap-9/index.jsp
 #               https://<cluster>/docs/api
-
 #
 # Sample CLI calls:
-# curl -X POST -u "<user>:<pass>" "https://<cluster>/api/protocols/cifs/services" -d '<json_body>' --insecure
+# curl -X POST -u "<user>:<pass>" "https://<cluster>/api/svms/svm" -d '<json_body>' --insecure
+# curl -X GET -u "<user>:<pass>" "https://cluster>/api/cluster/jobs/<job_id>" --insecure
 #
 ################################################################################
 
@@ -26,25 +26,22 @@ eval "$(jq -r '. | to_entries | .[] | .key + "=\"" + .value + "\""' < $GLOBAL_VA
 
 
 ### Step 2 - Create HTTP headers
-TOKEN=$(echo -n "$PRI_CLU_USER:$PRI_CLU_PASS" | base64)
+TOKEN=$(echo -n "$SEC_CLU_USER:$SEC_CLU_PASS" | base64)
 HEAD_AUTH="authorization: Basic $TOKEN"
 HEAD_APP="accept: application/hal+json"
 
 
 ### Step 3 - Create operation
-API="https://$PRI_CLU/api/protocols/cifs/services"
+API="https://$SEC_CLU/api/svm/svms"
 POST_DATA=`cat <<EOF
 {
-  "name": "$PRI_SVM",
-  "svm": {
-    "name": "$PRI_SVM"
-  },
-  "ad_domain": {
-    "fqdn": "$PRI_AD_DOMAIN",
-    "user": "$PRI_AD_USER",
-    "password": "$PRI_AD_PASS"
-  },
-  "comment": "Created with cURL"
+  "name": "$SEC_SVM",
+  "aggregates": [
+    {
+      "name": "$SEC_AGGR"
+    }
+  ],
+  "comment": "Created with cURL" 
 }
 EOF`
 
@@ -53,9 +50,9 @@ REST_RESPONSE=`curl -s \
 
 # Monitoring job
 JOB_URL=$(echo $REST_RESPONSE | jq -r '.job._links.self.href')
-echo -e "--> CIFS server create job was started here:\nhttps://$PRI_CLU$JOB_URL"
+echo -e "--> SVM create job was started here:\nhttps://$SEC_CLU$JOB_URL"
 
-JOB_API="https://$PRI_CLU/$JOB_URL"
+JOB_API="https://$SEC_CLU/$JOB_URL"
 JOB_STATUS="running"
 while [[ $JOB_STATUS == "running" ]]; do
   JOB_STATUS=`curl -s \

@@ -4,16 +4,17 @@
 #
 # Title:	02_get_svm_details.curl
 # Author:	Adrian Bronder
-# Date:		2020-16-03
+# Date:		2020-03-16
 # Description:	Get SVM information
 #		with simple curl commands
 #
-# APIs:		https://<cluster>/api/svm/svms
-#               https://<cluster>/api/name-services/dns
-#               https://<cluster>/api/protocols/cifs/services
-#		https://<cluster>/api/protocols/nfs/services
+# APIs:		/api/svm/svms
+#               /api/name-services/dns
+#               /api/protocols/cifs/services
+#		/api/protocols/nfs/services
 #
-# URLs:		http://docs.netapp.com/ontap-9/index.jsp
+# URLs:		https://docs.netapp.com/ontap-9/index.jsp
+#               https://<cluster>/docs/api
 #
 # Sample CLI call:
 # curl -X GET -u "<user>:<password>" "https://<cluster>/api/svm/svms" --insecure

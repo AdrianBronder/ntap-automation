@@ -4,15 +4,16 @@
 #
 # Title:	03_get_filesystem_details.curl
 # Author:	Adrian Bronder
-# Date:		2020-16-03
+# Date:		2020-03-16
 # Description:	Get filesystem information
 #		with simple curl commands
 #
-# APIs:		https://<cluster>/api/storage/volumes
-#               https://<cluster>/api/storage/qtrees
-#               https://<cluster>/api/protocols/cifs/shares
+# APIs:		/api/storage/volumes
+#               /api/storage/qtrees
+#               /api/protocols/cifs/shares
 #
-# URLs:		http://docs.netapp.com/ontap-9/index.jsp
+# URLs:		https://docs.netapp.com/ontap-9/index.jsp
+#               https://<cluster>/docs/api
 #
 # Sample CLI call:
 # curl -X GET -u "<user>:<password>" "https://<cluster>/api/storage/volumes" --insecure

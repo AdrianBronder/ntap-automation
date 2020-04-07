@@ -2,17 +2,16 @@
 
 ################################################################################
 #
-# Title:	27_create_nfslif_pri_svm.curl
+# Title:	51_create_iclif_pri_clu.curl
 # Author:	Adrian Bronder
-# Date:		2020-03-16
-# Description:	Create a NFS interface on primary SVM
+# Date:		2020-04-07
+# Description:	Create interconnect LIFs on primary cluster
 #		with simple curl commands
 #
 # APIs:		/api/network/ip/interfaces
 #
 # URLs:		https://docs.netapp.com/ontap-9/index.jsp
 #               https://<cluster>/docs/api
-
 #
 # Sample CLI calls:
 # curl -X POST -u "<user>:<pass>" "https://<cluster>/api/network/ip/interfaces" -d '<json_body>' --insecure
@@ -31,17 +30,19 @@ HEAD_AUTH="authorization: Basic $TOKEN"
 HEAD_APP="accept: application/hal+json"
 
 
-### Step 3 - Create opeartion
+### Step 3 - Create operation
+# NOTE: A dedicated IPspace es definitely recommended for intercluster traffic!
+#       For simplicity reasons, the Default IPspace is used in this demo.
 API="https://$PRI_CLU/api/network/ip/interfaces"
 POST_DATA=`cat <<EOF
 {
-  "name": "${PRI_SVM}_nfs_01",
-  "svm": {
-    "name": "$PRI_SVM"
+  "name": "$(echo $PRI_CLU | cut -d. -f1)_ic_01",
+  "ipspace": {
+    "name": "Default"
   },
   "ip": {
-    "address": "$PRI_SVM_NFS_IP",
-    "netmask": "$PRI_SVM_NFS_NETMASK"
+    "address": "$PRI_CLU_IC1_IP",
+    "netmask": "$PRI_CLU_IC1_NETMASK"
   },
   "location": {
     "home_port": {
@@ -52,14 +53,46 @@ POST_DATA=`cat <<EOF
     }
   },
   "service_policy": {
-    "name": "default-data-files"
+    "name": "default-intercluster"
   }
 }
 EOF`
 
-echo -e "--> Creating NFS interface on SVM:"
+echo -e "--> Creating intercluster interface #1:"
 REST_RESPONSE=`curl -s -w ' %{http_code}' \
   -H "$HEAD_APP" -H "$HEAD_AUTH" -X POST "$API" -d "$POST_DATA"`
 
 echo -e $REST_RESPONSE
 echo -e ""
+
+POST_DATA=`cat <<EOF
+{
+  "name": "$(echo $PRI_CLU | cut -d. -f1)_ic_02",
+  "ipspace": {
+    "name": "Default"
+  },
+  "ip": {
+    "address": "$PRI_CLU_IC2_IP",
+    "netmask": "$PRI_CLU_IC2_NETMASK"
+  },
+  "location": {
+    "home_port": {
+      "name": "$PRI_DATA_PORT",
+      "node": {
+        "name": "$PRI_CLU_NODE2"
+      }
+    }
+  },
+  "service_policy": {
+    "name": "default-intercluster"
+  }
+}
+EOF`
+
+echo -e "--> Creating intercluster interface #2:"
+REST_RESPONSE=`curl -s -w ' %{http_code}' \
+  -H "$HEAD_APP" -H "$HEAD_AUTH" -X POST "$API" -d "$POST_DATA"`
+
+echo -e $REST_RESPONSE
+echo -e ""
+

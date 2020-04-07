@@ -4,7 +4,7 @@
 #
 # Title:	24_create_cifs_pri_svm.py
 # Author:	Adrian Bronder
-# Date:		2020-17-03
+# Date:		2020-03-17
 # Description:	Create CIFS server on primary SVM
 #		with ONTAP Python client library
 #

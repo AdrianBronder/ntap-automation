@@ -4,15 +4,16 @@
 #
 # Title:        90_delete_all.curl
 # Author:       Adrian Bronder
-# Date:         2020-13-03
+# Date:         2020-03-13
 # Description:  Clean up the entire environment
 #		with simple curl commands
 #
-# APIs:         https://<cluster>/api/storage/volume
-#		https://<cluster>/api/protocols/cifs/service
-#		https://<cluster>/api/svm/svms
+# APIs:         /api/storage/volume
+#		/api/protocols/cifs/service
+#		/api/svm/svms
 #
-# URLs:         http://docs.netapp.com/ontap-9/index.jsp
+# URLs:		https://docs.netapp.com/ontap-9/index.jsp
+#               https://<cluster>/docs/api
 #
 # Sample CLI calls:
 # curl -X GET -u "<user>:<pass>" "https://cluster>/api/svms/svm?name=<svm_name>" --insecure
@@ -27,24 +28,107 @@ eval "$(jq -r '. | to_entries | .[] | .key + "=\"" + .value + "\""' < $GLOBAL_VA
 
 
 ### Step 2 - Create HTTP headers
-TOKEN=$(echo -n "$PRI_CLU_USER:$PRI_CLU_PASS" | base64)
-HEAD_AUTH="authorization: Basic $TOKEN"
+TOKEN1=$(echo -n "$PRI_CLU_USER:$PRI_CLU_PASS" | base64)
+TOKEN2=$(echo -n "$SEC_CLU_USER:$SEC_CLU_PASS" | base64)
+HEAD_AUTH1="authorization: Basic $TOKEN1"
+HEAD_AUTH2="authorization: Basic $TOKEN2"
 HEAD_APP="accept: application/hal+json"
 
 
-### Step 3 - Delete operations
+### Step 3 - Delete mirror and peering
+echo "--> Deleting peering"
+API="https://$PRI_CLU/api/cluster/peers?name=$(echo $SEC_CLU | cut -d. -f1)"
+REST_RESPONSE=`curl -s \
+  -H "$HEAD_APP" -H "$HEAD_AUTH1" -X GET "$API"`
+PEER_ID=`echo $REST_RESPONSE | jq -r '.records[0].uuid'`
+
+# Execute deletion of cluster peering on primary cluster
+API="https://$PRI_CLU/api/cluster/peers/$PEER_ID"
+REST_RESPONSE=`curl -s -w ' %{http_code}' \
+  -H "$HEAD_APP" -H "$HEAD_AUTH1" -X DELETE "$API"`
+echo -e $REST_RESPONSE
+echo -e ""
+
+API="https://$SEC_CLU/api/cluster/peers?name=$(echo $PRI_CLU | cut -d. -f1)"
+REST_RESPONSE=`curl -s \
+  -H "$HEAD_APP" -H "$HEAD_AUTH2" -X GET "$API"`
+PEER_ID=`echo $REST_RESPONSE | jq -r '.records[0].uuid'`
+
+# Execute deletion of cluster peering on primary cluster
+API="https://$SEC_CLU/api/cluster/peers/$PEER_ID"
+REST_RESPONSE=`curl -s -w ' %{http_code}' \
+  -H "$HEAD_APP" -H "$HEAD_AUTH2" -X DELETE "$API"`
+echo -e $REST_RESPONSE
+echo -e ""
+
+
+## Step 4 - Delete secondary
+echo "--> DELETING SECONDARY"
+
+# Get SVM ID by name
+API="https://$SEC_CLU/api/svm/svms?name=$SEC_SVM"
+REST_RESPONSE=`curl -s \
+  -H "$HEAD_APP" -H "$HEAD_AUTH2" -X GET "$API"`
+SVM_ID=`echo $REST_RESPONSE | jq -r '.records[0].uuid'`
+
+# Execute querie-based volume delete on secondary
+API="https://$SEC_CLU/api/storage/volumes?name=!*_root&svm.name=$SEC_SVM"
+REST_RESPONSE=`curl -s \
+  -H "$HEAD_APP" -H "$HEAD_AUTH2" -X DELETE "$API"`
+
+# Monitor job(s)
+echo -e "--> Volume delete operation(s) started here:"
+echo -e $REST_RESPONSE | jq -r '.jobs[] | [ ._links.self.href ] | @tsv' |
+  while IFS=$'\t' read -r JOB_URL; do
+    echo -e "https://$SEC_CLU$JOB_URL"
+  done
+echo -e $REST_RESPONSE | jq -r '.jobs[] | [._links.self.href] | @tsv' |
+  while IFS=$'\t' read -r JOB_URL; do
+    JOB_API="https://$SEC_CLU/$JOB_URL"
+    JOB_STATUS="running"
+    while [[ $JOB_STATUS == "running" ]]; do
+      JOB_STATUS=`curl -s \
+        -H "$HEAD_APP" -H "$HEAD_AUTH2" -X GET "$JOB_API" | jq -r '.state'`
+      echo -e "Job in state: $JOB_STATUS"
+      sleep 2
+    done
+  done
+echo -e ""
+
+# Execute deletion of secondary SVM
+API="https://$SEC_CLU/api/svm/svms/$SVM_ID"
+REST_RESPONSE=`curl -s i\
+  -H "$HEAD_APP" -H "$HEAD_AUTH2" -X DELETE "$API"`
+
+# Monitor job(s)
+JOB_URL=$(echo $REST_RESPONSE | jq -r '.job._links.self.href')
+echo -e "--> SVM delete Job was started here:\nhttps://$SEC_CLU$JOB_URL"
+
+JOB_API="https://$SEC_CLU/$JOB_URL"
+JOB_STATUS="running"
+while [[ $JOB_STATUS == "running" ]]; do
+  JOB_STATUS=`curl -s -H "$HEAD_APP" -H "$HEAD_AUTH2" -X GET "$JOB_API" | jq -r '.state'`
+  echo -e "Job in state: $JOB_STATUS"
+  sleep 2
+done
+echo -e ""
+
+
+### Step 5 - Delete primary
+echo "--> DELETING PRIMARY"
+
 # Get SVM ID by name
 API="https://$PRI_CLU/api/svm/svms?name=$PRI_SVM"
 REST_RESPONSE=`curl -s \
-  -H "$HEAD_APP" -H "$HEAD_AUTH" -X GET "$API"`
+  -H "$HEAD_APP" -H "$HEAD_AUTH1" -X GET "$API"`
 SVM_ID=`echo $REST_RESPONSE | jq -r '.records[0].uuid'`
 
-# Execute querie-based volume delete
+# Execute querie-based volume delete on primary
 API="https://$PRI_CLU/api/storage/volumes?name=!*_root&svm.name=$PRI_SVM"
 REST_RESPONSE=`curl -s \
-  -H "$HEAD_APP" -H "$HEAD_AUTH" -X DELETE "$API"`
+  -H "$HEAD_APP" -H "$HEAD_AUTH1" -X DELETE "$API"`
 
-# API result
+# Monitor job(s) 
 echo -e "--> Volume delete operation(s) started here:"
 echo -e $REST_RESPONSE | jq -r '.jobs[] | [ ._links.self.href ] | @tsv' |
   while IFS=$'\t' read -r JOB_URL; do
@@ -56,12 +140,13 @@ echo -e $REST_RESPONSE | jq -r '.jobs[] | [._links.self.href] | @tsv' |
     JOB_STATUS="running"
     while [[ $JOB_STATUS == "running" ]]; do
       JOB_STATUS=`curl -s \
-        -H "$HEAD_APP" -H "$HEAD_AUTH" -X GET "$JOB_API" | jq -r '.state'`
+        -H "$HEAD_APP" -H "$HEAD_AUTH1" -X GET "$JOB_API" | jq -r '.state'`
       echo -e "Job in state: $JOB_STATUS"
       sleep 2
     done
   done
 echo -e ""
+
 
 # Delete CIFS Server
 API="https://$PRI_CLU/api/protocols/cifs/services/$SVM_ID"
@@ -76,16 +161,16 @@ DELETE_DATA=`cat <<EOF
 EOF`
 
 REST_RESPONSE=`curl -s i\
-  -H "$HEAD_APP" -H "$HEAD_AUTH" -X DELETE "$API" -d "$DELETE_DATA"`
+  -H "$HEAD_APP" -H "$HEAD_AUTH1" -X DELETE "$API" -d "$DELETE_DATA"`
 
-# Monitoring job
+# Monitor job(s)
 JOB_URL=$(echo $REST_RESPONSE | jq -r '.job._links.self.href')
 echo -e "--> CIFS server delete Job was started here:\nhttps://$PRI_CLU$JOB_URL"
 
 JOB_API="https://$PRI_CLU/$JOB_URL"
 JOB_STATUS="running"
 while [[ $JOB_STATUS == "running" ]]; do
-  JOB_STATUS=`curl -s -H "$HEAD_APP" -H "$HEAD_AUTH" -X GET "$JOB_API" | jq -r '.state'`
+  JOB_STATUS=`curl -s -H "$HEAD_APP" -H "$HEAD_AUTH1" -X GET "$JOB_API" | jq -r '.state'`
   echo -e "Job in state: $JOB_STATUS"
   sleep 2
 done
@@ -94,16 +179,16 @@ echo -e ""
 # Execute deletion of primary SVM
 API="https://$PRI_CLU/api/svm/svms/$SVM_ID"
 REST_RESPONSE=`curl -s i\
-  -H "$HEAD_APP" -H "$HEAD_AUTH" -X DELETE "$API"`
+  -H "$HEAD_APP" -H "$HEAD_AUTH1" -X DELETE "$API"`
 
-# Monitoring job
+# Monitor job(s)
 JOB_URL=$(echo $REST_RESPONSE | jq -r '.job._links.self.href')
 echo -e "--> SVM delete Job was started here:\nhttps://$PRI_CLU$JOB_URL"
 
 JOB_API="https://$PRI_CLU/$JOB_URL"
 JOB_STATUS="running"
 while [[ $JOB_STATUS == "running" ]]; do
-  JOB_STATUS=`curl -s -H "$HEAD_APP" -H "$HEAD_AUTH" -X GET "$JOB_API" | jq -r '.state'`
+  JOB_STATUS=`curl -s -H "$HEAD_APP" -H "$HEAD_AUTH1" -X GET "$JOB_API" | jq -r '.state'`
   echo -e "Job in state: $JOB_STATUS"
   sleep 2
 done

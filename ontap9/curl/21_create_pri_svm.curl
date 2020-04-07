@@ -4,13 +4,14 @@
 #
 # Title:	21_create_pri_svm.curl
 # Author:	Adrian Bronder
-# Date:		2020-11-03
+# Date:		2020-03-11
 # Description:	Create primary SVM
 #		with simple curl commands
 #
-# APIs:		https://<cluster>/api/svm/svms
+# APIs:		/api/svm/svms
 #
-# URLs:		http://docs.netapp.com/ontap-9/index.jsp
+# URLs:		https://docs.netapp.com/ontap-9/index.jsp
+#               https://<cluster>/docs/api
 #
 # Sample CLI calls:
 # curl -X POST -u "<user>:<pass>" "https://<cluster>/api/svms/svm" -d '<json_body>' --insecure
