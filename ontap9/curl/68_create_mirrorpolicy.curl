@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+
+################################################################################
+#
+# Title:	68_create_mirrorpolicy.curl
+# Author:	Adrian Bronder
+# Date:		2020-04-23
+# Description:	Create a SnapMirror policy on secondary SVM
+#		with simple curl commands
+#
+# APIs:		/api/snapmirror/policies
+#
+# URLs:		https://docs.netapp.com/ontap-9/index.jsp
+#               https://<cluster>/docs/api
+#
+# Sample CLI calls:
+# curl -X POST -u "<user>:<pass>" "https://<cluster>/api/snapmirror/policies" -d '<json_body>' --insecure
+#
+################################################################################
+
+
+### Step 1 - Read in global variables
+GLOBAL_VARS=$(dirname $0)/../global.vars
+eval "$(jq -r '. | to_entries | .[] | .key + "=\"" + .value + "\""' < $GLOBAL_VARS)"
+
+
+### Step 2 - Create HTTP headers
+TOKEN=$(echo -n "$SEC_CLU_USER:$SEC_CLU_PASS" | base64)
+HEAD_AUTH="authorization: Basic $TOKEN"
+HEAD_APP="accept: application/hal+json"
+
+
+### Step 3 - Create operation
+API="https://$SEC_CLU/api/snapmirror/policies"
+POST_DATA=`cat <<EOF
+{
+  "name": "demo-async",
+  "svm": {
+    "name": "$SEC_SVM"
+  },
+  "type": "async",
+  "transfer_schedule": {
+    "name": "pg-hourly"
+  },
+  "network_compression_enabled": true,
+  "retention": [
+    {
+      "count": "1",
+      "label": "hourly_snap"
+    },
+    {
+      "creation_schedule": {
+        "name": "weekly"
+      },
+      "count": "7",
+      "label": "daily_snap"
+    }
+  ]
+}
+EOF`
+
+REST_RESPONSE=`curl -s \
+  -H "$HEAD_APP" -H "$HEAD_AUTH" -X POST "$API" -d "$POST_DATA"`
+
+# Monitoring job
+JOB_URL=$(echo $REST_RESPONSE | jq -r '.job._links.self.href')
+echo -e "--> Policy create job was started here:\nhttps://$SEC_CLU$JOB_URL"
+
+JOB_API="https://$SEC_CLU/$JOB_URL"
+JOB_STATUS="running"
+while [[ $JOB_STATUS == "running" ]]; do
+  JOB_STATUS=`curl -s \
+    -H "$HEAD_APP" -H "$HEAD_AUTH" -X GET "$JOB_API" | jq -r '.state'`
+  echo -e "Job in state: $JOB_STATUS"
+  sleep 2
+done
+echo -e ""

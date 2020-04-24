@@ -42,7 +42,7 @@ POST_DATA=`cat <<EOF
   },
   "ip": {
     "address": "$PRI_CLU_IC1_IP",
-    "netmask": "$PRI_CLU_IC1_NETMASK"
+    "netmask": "$PRI_CLU_IC_NETMASK"
   },
   "location": {
     "home_port": {
@@ -73,7 +73,7 @@ POST_DATA=`cat <<EOF
   },
   "ip": {
     "address": "$PRI_CLU_IC2_IP",
-    "netmask": "$PRI_CLU_IC2_NETMASK"
+    "netmask": "$PRI_CLU_IC_NETMASK"
   },
   "location": {
     "home_port": {

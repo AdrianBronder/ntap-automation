@@ -35,8 +35,13 @@ HEAD_AUTH2="authorization: Basic $TOKEN2"
 HEAD_APP="accept: application/hal+json"
 
 
-### Step 3 - Delete mirror and peering
-echo "--> Deleting peering"
+### Step 3 - Delete SnapMirror relations and SVM peering
+
+
+
+### Step 4 - Delete cluster peering and interconnects
+echo -e "--> Deleting peering"
+# Primary cluster
 API="https://$PRI_CLU/api/cluster/peers?name=$(echo $SEC_CLU | cut -d. -f1)"
 REST_RESPONSE=`curl -s \
   -H "$HEAD_APP" -H "$HEAD_AUTH1" -X GET "$API"`
@@ -49,6 +54,7 @@ REST_RESPONSE=`curl -s -w ' %{http_code}' \
 echo -e $REST_RESPONSE
 echo -e ""
 
+# Secondary cluster
 API="https://$SEC_CLU/api/cluster/peers?name=$(echo $PRI_CLU | cut -d. -f1)"
 REST_RESPONSE=`curl -s \
   -H "$HEAD_APP" -H "$HEAD_AUTH2" -X GET "$API"`
@@ -61,8 +67,23 @@ REST_RESPONSE=`curl -s -w ' %{http_code}' \
 echo -e $REST_RESPONSE
 echo -e ""
 
+# Deleting ICs
+echo -e "--> Removing intercluster LIFs on secondary cluster"
+API="https://$SEC_CLU/api/network/ip/interfaces?ip.address=$SEC_CLU_IC1_IP,$SEC_CLU_IC2_IP"
+REST_RESPONSE=`curl -s -w ' %{http_code}' \
+  -H "$HEAD_APP" -H "$HEAD_AUTH2" -X DELETE "$API"`
+echo -e $REST_RESPONSE
+echo -e ""
 
-## Step 4 - Delete secondary
+echo -e "--> Removing intercluster LIFs on primary cluster"
+API="https://$PRI_CLU/api/network/ip/interfaces?ip.address=$PRI_CLU_IC1_IP,$PRI_CLU_IC2_IP"
+REST_RESPONSE=`curl -s -w ' %{http_code}' \
+  -H "$HEAD_APP" -H "$HEAD_AUTH1" -X DELETE "$API"`
+echo -e $REST_RESPONSE
+echo -e ""
+
+
+### Step 5 - Delete secondary
 echo "--> DELETING SECONDARY"
 
 # Get SVM ID by name
@@ -95,6 +116,58 @@ echo -e $REST_RESPONSE | jq -r '.jobs[] | [._links.self.href] | @tsv' |
   done
 echo -e ""
 
+# Execute querie-based SnapMirror Policy delete on secondary
+API="https://$SEC_CLU/api/snapmirror/policies?svm.name=$SEC_SVM"
+REST_RESPONSE=`curl -s \
+  -H "$HEAD_APP" -H "$HEAD_AUTH2" -X DELETE "$API"`
+
+# Monitor job(s)
+echo -e "--> Policy delete operation(s) started here:"
+echo -e $REST_RESPONSE | jq -r '.jobs[] | [ ._links.self.href ] | @tsv' |
+  while IFS=$'\t' read -r JOB_URL; do
+    echo -e "https://$SEC_CLU$JOB_URL"
+  done
+echo -e $REST_RESPONSE | jq -r '.jobs[] | [._links.self.href] | @tsv' |
+  while IFS=$'\t' read -r JOB_URL; do
+    JOB_API="https://$SEC_CLU/$JOB_URL"
+    JOB_STATUS="running"
+    while [[ $JOB_STATUS == "running" ]]; do
+      JOB_STATUS=`curl -s \
+        -H "$HEAD_APP" -H "$HEAD_AUTH2" -X GET "$JOB_API" | jq -r '.state'`
+      echo -e "Job in state: $JOB_STATUS"
+      sleep 2
+    done
+  done
+echo -e ""
+
+# Delete CIFS Server
+API="https://$SEC_CLU/api/protocols/cifs/services/$SVM_ID"
+DELETE_DATA=`cat <<EOF
+{
+  "ad_domain": {
+    "fqdn": "$SEC_AD_DOMAIN",
+    "user": "$SEC_AD_USER",
+    "password": "$SEC_AD_PASS"
+  }
+}
+EOF`
+
+REST_RESPONSE=`curl -s i\
+  -H "$HEAD_APP" -H "$HEAD_AUTH1" -X DELETE "$API" -d "$DELETE_DATA"`
+
+# Monitor job(s)
+JOB_URL=$(echo $REST_RESPONSE | jq -r '.job._links.self.href')
+echo -e "--> CIFS server delete Job was started here:\nhttps://$SEC_CLU$JOB_URL"
+
+JOB_API="https://$SEC_CLU/$JOB_URL"
+JOB_STATUS="running"
+while [[ $JOB_STATUS == "running" ]]; do
+  JOB_STATUS=`curl -s -H "$HEAD_APP" -H "$HEAD_AUTH1" -X GET "$JOB_API" | jq -r '.state'`
+  echo -e "Job in state: $JOB_STATUS"
+  sleep 2
+done
+echo -e ""
+
 # Execute deletion of secondary SVM
 API="https://$SEC_CLU/api/svm/svms/$SVM_ID"
 REST_RESPONSE=`curl -s i\
@@ -114,7 +187,7 @@ done
 echo -e ""
 
 
-### Step 5 - Delete primary
+### Step 6 - Delete primary
 echo "--> DELETING PRIMARY"
 
 # Get SVM ID by name

@@ -2,19 +2,19 @@
 
 ################################################################################
 #
-# Title:	52_create_iclif_sec_clu.curl
+# Title:	66_create_nfs_sec_svm.curl
 # Author:	Adrian Bronder
-# Date:		2020-04-07
-# Description:	Create interconnect LIFs on secondary cluster
+# Date:		2020-04-23
+# Description:	Create NFS server on secondary SVM
 #		with simple curl commands
 #
-# APIs:		/api/network/ip/interfaces
+# APIs:		/api/protocols/nfs/services
 #
 # URLs:		https://docs.netapp.com/ontap-9/index.jsp
 #               https://<cluster>/docs/api
 #
 # Sample CLI calls:
-# curl -X POST -u "<user>:<pass>" "https://<cluster>/api/network/ip/interfaces" -d '<json_body>' --insecure
+# curl -X POST -u "<user>:<pass>" "https://<cluster>/api/protocols/nfs/services" -d '<json_body>' --insecure
 #
 ################################################################################
 
@@ -31,34 +31,22 @@ HEAD_APP="accept: application/hal+json"
 
 
 ### Step 3 - Create operation
-# NOTE: A dedicated IPspace es definitely recommended for intercluster traffic!
-#       For simplicity reasons, the Default IPspace is used in this demo.
-API="https://$SEC_CLU/api/network/ip/interfaces"
+API="https://$SEC_CLU/api/protocols/nfs/services"
 POST_DATA=`cat <<EOF
 {
-  "name": "$(echo $SEC_CLU | cut -d. -f1)_ic_01",
-  "ipspace": {
-    "name": "Default"
+  "svm": {
+    "name": "$SEC_SVM"
   },
-  "ip": {
-    "address": "$SEC_CLU_IC1_IP",
-    "netmask": "$SEC_CLU_IC_NETMASK"
-  },
-  "location": {
-    "home_port": {
-      "name": "$SEC_DATA_PORT",
-      "node": {
-        "name": "$SEC_CLU_NODE1"
-      }
-    }
-  },
-  "service_policy": {
-    "name": "default-intercluster"
+  "enabled": "true",
+  "protocol": {
+    "v3_enabled": "true",
+    "v40_enabled": "false",
+    "v41_enabled": "false"
   }
 }
 EOF`
 
-echo -e "--> Creating intercluster interface #1:"
+echo -e "--> Creating NFS server on SVM:"
 REST_RESPONSE=`curl -s -w ' %{http_code}' \
   -H "$HEAD_APP" -H "$HEAD_AUTH" -X POST "$API" -d "$POST_DATA"`
 
