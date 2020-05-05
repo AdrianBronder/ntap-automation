@@ -40,6 +40,33 @@ $hdrs.Add("Authorization", "Basic $TOKEN")
 $API="https://$($GLOBAL_VARS.PRI_CLU)/api/cluster?fields=*"
 Write-Host "--> calling $API"
 $REST_RESPONSE = Invoke-RestMethod -Uri $API -Headers $hdrs -Method GET
+#$REST_RESPONSE | ConvertTo-Json
+
+$ntap_cluster = New-Object -TypeName psobject
+$ntap_cluster | Add-Member -MemberType NoteProperty -Name "Name" -Value $REST_RESPONSE.name
+$ntap_cluster | Add-Member -MemberType NoteProperty -Name "IP" -Value $REST_RESPONSE.management_interfaces[0].ip.address
+$ntap_cluster | Add-Member -MemberType NoteProperty -Name "Version" -Value $REST_RESPONSE.version.full
 
 Write-Host "--> Printing cluster details"
-$REST_RESPONSE | Select-Object -Property Name, management_interfaces, version
+($ntap_cluster | Format-List | Out-String).Trim()
+Write-Host ""
+
+# Nodes
+$API="https://$($GLOBAL_VARS.PRI_CLU)/api/cluster/nodes?fields=*"
+Write-Host "--> calling $API"
+$REST_RESPONSE = Invoke-RestMethod -Uri $API -Headers $hdrs -Method GET
+
+Write-Host "--> Printing node details"
+($REST_RESPONSE.records | Select-Object name, serial_number, model | Out-String).Trim()
+
+
+
+#$ntap_nodes = New-Object System.Collections.ArrayList
+#foreach($node in $REST_RESPONSE.records){
+#    $temp = "" | select "Name", "serial_number", "Model"
+#    $temp.Name = $node.name
+#    $temp.serial_number = $node.serial_number
+#    $temp.Model = $node.model
+#    $ntap_nodes.Add($temp) | Out-Null
+#}
+#$ntap_nodes
