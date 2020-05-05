@@ -54,10 +54,10 @@ REST_RESPONSE=`curl -s \
   -H "$HEAD_APP" -H "$HEAD_AUTH" -X GET "$API"`
 
 echo -e "--> Printing node details"
-printf "%-15s %-15s %-10s\n" "Name" "Serial" "Model"
+printf "%-20s %-15s %-10s\n" "Name" "SN#" "Model"
 echo -e $REST_RESPONSE | jq -r '.records[] | [.name, .serial_number, .model] | @tsv' |
   while IFS=$'\t' read -r NAME SN MODEL; do
-    printf "%-15s %-15s %-10s\n" $NAME $SN $MODEL
+    printf "%-20s %-15s %-10s\n" $NAME $SN $MODEL
   done
 echo -e ""
 

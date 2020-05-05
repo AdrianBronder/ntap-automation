@@ -42,7 +42,7 @@ config.CONNECTION = HostConnection(
 # Cluster
 cluster = Cluster()
 cluster.get()
-print("--> Printing cluster details"
+print("--> Printing cluster details\n"
 	+ "Name:    %s\n" % (cluster.name)
 	+ "IP:      %s\n" % (cluster.management_interfaces[0].ip.address)
 	+ "Version: %s\n" % (cluster.version.full)
@@ -50,8 +50,8 @@ print("--> Printing cluster details"
 
 # Nodes
 print("--> Printing node details")
-print("{:<20}{:<15}{:<15}{:<15}{:<10}".format(
-        "Name", "Node", "Size", "Used", "State")
+print("{:<20}{:<15}{:<10}".format(
+        "Name", "SN#", "Model")
 )
 for node in Node.get_collection():
         node.get()
