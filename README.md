@@ -1,6 +1,6 @@
 # NetApp Automation Demos
 
-Welcome to my collection of automation demos. In this repository you will find various examples on how to automate administrative and operational tasks on NetApp solutions.
+Welcome to my collection of automation demos. In this repository you will find various examples on how to automate administrative and operational tasks on NetApp solutions. The main purpose is enabling you writing your own scripts/integartions by providing simple examples in small chunks. The scripts in this repository are not tuned for production use.
 
 ## Quick Start
 If you are a customer, partner or NetApp employee:
