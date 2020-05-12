@@ -6,7 +6,8 @@ Welcome to my collection of automation demos. In this repository you will find v
 If you are a customer, partner or NetApp employee:
 
 1. Please use the virtual hands-on lab (log in with your NetApp support account):
-   https://handsonlabs.netapp.com/lab/ontapapi
+   Customer: https://handsonlabs.netapp.com/lab/ontapapi
+   NetApp Partner: https://labondemand.netapp.com/lab/sl10599
 
 2. Log into the first Linux machine (rhel1) and clone this repository:
    ```
