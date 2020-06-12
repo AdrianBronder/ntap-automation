@@ -21,11 +21,15 @@ yum -y update
 echo "--> Installing additional packages"
 yum -y install jq
 
+echo "--> Upgrading pip"
+pip install --upgrade pip
+
 echo "--> Installing NetApp Python lib (for ZAPI use)"
 pip install netapp_lib
 
-echo "--> Installing ONTAP collection for Ansible"
+echo "--> Installing ONTAP and Active IQ Unified Manager collections for Ansible"
 ansible-galaxy collection install netapp.ontap
+ansible-galaxy collection install netapp.um_info
 
 echo "--> Creating links for Python3"
 ln -s /usr/local/bin/python3.7 /usr/bin/python3
