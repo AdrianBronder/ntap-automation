@@ -64,14 +64,8 @@
     set_fact:
       selected_aggr: "{{ na_aggr.ontap_info.aggregate_info.records |
                          sort(attribute='metric.iops.total') | 
-                         reverse |
                          list |
                          first }}"
-  - name: get aggr details
-    debug:
-      msg:
-        - "{{ selected_aggr.name }}"
-        - "{{ selected_aggr.metric.iops.total }}"
 
   - name: Get sum of volumes
     set_fact:
