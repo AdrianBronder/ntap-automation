@@ -1,0 +1,97 @@
+#!/usr/bin/env ansible-playbook
+
+################################################################################
+#
+# Title:        vol_create_by_iops.yml
+# Author:       Adrian Bronder
+# Date:         2020-06-16
+# Description:  Create volume on aggregate with lowest IO utilization
+#               with Ansible modules
+#
+# Modules:      na_ontap_rest_info
+#               na_ontap_volume
+#               
+#
+# URLs:         http://docs.netapp.com/ontap-9/index.jsp
+#               https://galaxy.ansible.com/netapp/ontap
+#
+# Built-in help:
+# ansible-doc netapp.ontap.na_ontap_info
+#
+################################################################################
+
+- hosts: localhost
+  gather_facts: false
+  vars:
+    vol_counter:      1
+    input: &input
+      hostname:       "{{ PRI_CLU }}"
+      username:       "{{ PRI_CLU_USER }}"
+      password:       "{{ PRI_CLU_PASS }}"
+      https:          true
+      validate_certs: false
+      use_rest:       "Always"
+  vars_files:
+    - ../global.vars
+  collections:
+    - netapp.ontap
+
+  tasks:
+  - name: Get Ontap Info
+    na_ontap_rest_info:
+      state: info
+      gather_subset:
+        - aggregate_info
+      fields: 
+        - name
+        - node
+        - metric
+      <<: *input
+    register: na_aggr
+
+  - name: Get Ontap Info
+    na_ontap_rest_info:
+      state: info
+      gather_subset:
+        - volume_info
+      fields:
+        - name
+        - svm
+      <<: *input
+    register: na_vol
+
+  - name: Find aggregate with lowest IOPS
+    set_fact:
+      selected_aggr: "{{ na_aggr.ontap_info.aggregate_info.records |
+                         sort(attribute='metric.iops.total') | 
+                         reverse |
+                         list |
+                         first }}"
+  - name: get aggr details
+    debug:
+      msg:
+        - "{{ selected_aggr.name }}"
+        - "{{ selected_aggr.metric.iops.total }}"
+
+  - name: Get sum of volumes
+    set_fact:
+      vol_counter: "{{ vol_counter | int + 1 }}"
+    with_items:
+      "{{ na_vol.ontap_info.volume_info.records }}"
+    when:
+      item.svm.name == "{{ PRI_SVM }}"
+
+  - name: Provision volume on selected aggregate
+    na_ontap_volume:
+      state:                 present
+      name:                  "{{ PRI_SVM }}_vol_{{ '%03d' | format(vol_counter|int) }}"
+      vserver:               "{{ PRI_SVM }}"
+      size:                  "{{ VOL_SIZE }}"
+      size_unit:             b
+      aggregate_name:        "{{ selected_aggr.name }}"
+      comment:               Created with Ansible
+      space_guarantee:       volume
+      policy:                default
+      junction_path:         "/{{ PRI_SVM }}_vol_{{ '%03d' | format(vol_counter|int) }}"
+      volume_security_style: ntfs
+      <<: *input
