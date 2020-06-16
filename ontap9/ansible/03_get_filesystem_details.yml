@@ -80,6 +80,8 @@
         - "Path:      {{ item.path }}"
     with_items:
       "{{ qtree_info.json.records }}"
+    when:
+      item.path is defined
 
   - name: Print CIFS share details
     debug:

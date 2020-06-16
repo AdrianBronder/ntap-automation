@@ -2,19 +2,19 @@
 
 ################################################################################
 #
-# Title:        25_create_nfslif_pri_svm.yml
+# Title:        46_create_iscsilinvol_pri_svm.yml
 # Author:       Adrian Bronder
-# Date:         2020-03-20
-# Description:  Create NFS interface on primary SVM
+# Date:         2020-06-16
+# Description:  Create volume on primary SVM
 #               with Ansible modules
 #
-# Modules:      na_ontap_interface
+# Modules:      na_ontap_volume
 #
 # URLs:         http://docs.netapp.com/ontap-9/index.jsp
 #               https://galaxy.ansible.com/netapp/ontap
 #
 # Built-in help:
-# ansible-doc netapp.ontap.na_ontap_interface
+# ansible-doc netapp.ontap.na_ontap_volume
 #
 ################################################################################
 
@@ -34,15 +34,16 @@
     - netapp.ontap
 
   tasks:
-  - name: Create NFS interface on primary SVM
-    na_ontap_interface:
+  - name: Create volume on primary SVM
+    na_ontap_volume:
       state:                 present
-      interface_name:        "{{ PRI_SVM }}_nfs_01"
+      name:                  "{{ PRI_SVM }}_iscsilin_01"
       vserver:               "{{ PRI_SVM }}"
-      address:               "{{ PRI_SVM_NFS_IP }}"
-      netmask:               "{{ PRI_SVM_NFS_NETMASK }}"
-      home_node:             "{{ PRI_CLU_NODE1 }}"
-      home_port:             "{{ PRI_DATA_PORT }}"
-      role:                  data
-      service_policy:        default-data-files
+      size:                  "{{ VOL_SIZE }}"
+      size_unit:             b
+      aggregate_name:        "{{ PRI_AGGR }}"
+      comment:               Created with Ansible
+      space_guarantee:       volume
+      policy:                default
+      volume_security_style: unix
       <<: *input

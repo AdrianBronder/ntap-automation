@@ -2,10 +2,11 @@
 
 ################################################################################
 #
-# Title:        25_create_nfslif_pri_svm.yml
+# Title:        25_create_iscsilif_pri_svm.yml
 # Author:       Adrian Bronder
-# Date:         2020-03-20
-# Description:  Create NFS interface on primary SVM
+#               Ronald Feist
+# Date:         2020-06-16
+# Description:  Create iSCSI interfaces on primary SVM
 #               with Ansible modules
 #
 # Modules:      na_ontap_interface
@@ -34,15 +35,31 @@
     - netapp.ontap
 
   tasks:
-  - name: Create NFS interface on primary SVM
+  - name: Create 1st iSCSI interface for primary SVM
     na_ontap_interface:
       state:                 present
-      interface_name:        "{{ PRI_SVM }}_nfs_01"
+      interface_name:        "{{ PRI_SVM }}_iscsi_01"
       vserver:               "{{ PRI_SVM }}"
-      address:               "{{ PRI_SVM_NFS_IP }}"
-      netmask:               "{{ PRI_SVM_NFS_NETMASK }}"
+      address:               "{{ PRI_SVM_ISCSI1_IP }}"
+      netmask:               "{{ PRI_SVM_ISCSI_NETMASK }}"
       home_node:             "{{ PRI_CLU_NODE1 }}"
       home_port:             "{{ PRI_DATA_PORT }}"
+      protocols:             iscsi
       role:                  data
-      service_policy:        default-data-files
+      service_policy:        default-data-blocks
       <<: *input
+
+  - name: Create 2nd iSCSI interface for primary SVM
+    na_ontap_interface:
+      state:                 present
+      interface_name:        "{{ PRI_SVM }}_iscsi_02"
+      vserver:               "{{ PRI_SVM }}"
+      address:               "{{ PRI_SVM_ISCSI2_IP }}"
+      netmask:               "{{ PRI_SVM_ISCSI_NETMASK }}"
+      home_node:             "{{ PRI_CLU_NODE2 }}"
+      home_port:             "{{ PRI_DATA_PORT }}"
+      protocols:             iscsi
+      role:                  data
+      service_policy:        default-data-blocks
+      <<: *input
+

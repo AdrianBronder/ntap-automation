@@ -2,19 +2,19 @@
 
 ################################################################################
 #
-# Title:        25_create_nfslif_pri_svm.yml
+# Title:        48_create_winigroup_pri_svm.yml
 # Author:       Adrian Bronder
-# Date:         2020-03-20
-# Description:  Create NFS interface on primary SVM
+# Date:         2020-06-16
+# Description:  Create igroup on primary SVM
 #               with Ansible modules
 #
-# Modules:      na_ontap_interface
+# Modules:      na_ontap_igroup
 #
 # URLs:         http://docs.netapp.com/ontap-9/index.jsp
 #               https://galaxy.ansible.com/netapp/ontap
 #
 # Built-in help:
-# ansible-doc netapp.ontap.na_ontap_interface
+# ansible-doc netapp.ontap.na_ontap_igroup
 #
 ################################################################################
 
@@ -34,15 +34,12 @@
     - netapp.ontap
 
   tasks:
-  - name: Create NFS interface on primary SVM
-    na_ontap_interface:
-      state:                 present
-      interface_name:        "{{ PRI_SVM }}_nfs_01"
+  - name: Create igroup on primary SVM
+    na_ontap_igroup:
+      state: present
+      name:                  "{{ PRI_SVM }}_linig_01"
       vserver:               "{{ PRI_SVM }}"
-      address:               "{{ PRI_SVM_NFS_IP }}"
-      netmask:               "{{ PRI_SVM_NFS_NETMASK }}"
-      home_node:             "{{ PRI_CLU_NODE1 }}"
-      home_port:             "{{ PRI_DATA_PORT }}"
-      role:                  data
-      service_policy:        default-data-files
+      initiator_group_type:  iscsi
+      ostype:                linux
+      initiator:             "{{ LIN_IQN }}"
       <<: *input
