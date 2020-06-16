@@ -2,7 +2,7 @@
 
 ################################################################################
 #
-# Title:	27_create_nfslif_pri_svm.curl
+# Title:	25_create_nfslif_pri_svm.curl
 # Author:	Adrian Bronder
 # Date:		2020-03-16
 # Description:	Create a NFS interface on primary SVM

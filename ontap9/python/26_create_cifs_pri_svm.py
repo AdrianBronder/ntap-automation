@@ -2,13 +2,13 @@
 
 ################################################################################
 #
-# Title:	27_create_nfslif_pri_svm.py
+# Title:	26_create_cifs_pri_svm.py
 # Author:	Adrian Bronder
 # Date:		2020-03-17
-# Description:	Create NFS interface on primary SVM
+# Description:	Create CIFS server on primary SVM
 #		with ONTAP Python client library
 #
-# Resources:    netapp_ontap.resources.IpInterface
+# Resources:    netapp_ontap.resources.cifs_service
 #
 # URLs:		http://docs.netapp.com/ontap-9/index.jsp
 #		https://pypi.org/project/netapp-ontap/
@@ -18,7 +18,7 @@
 
 import json, os, sys
 from netapp_ontap import config, HostConnection, NetAppRestError
-from netapp_ontap.resources import IpInterface
+from netapp_ontap.resources import CifsService
 
 
 ### Step 1 - Read in global variables
@@ -36,33 +36,24 @@ config.CONNECTION = HostConnection(
 
 
 ### Step 3 - Create operation
-lif = IpInterface.from_dict(
+cifs = CifsService.from_dict(
 {
-  "name": global_vars["PRI_SVM"]+"_nfs_01",
+  "name": global_vars["PRI_SVM"],
   "svm": {
     "name": global_vars["PRI_SVM"]
   },
-  "ip": {
-    "address": global_vars["PRI_SVM_NFS_IP"],
-    "netmask": global_vars["PRI_SVM_NFS_NETMASK"]
+  "ad_domain": {
+    "fqdn": global_vars["PRI_AD_DOMAIN"],
+    "user": global_vars["PRI_AD_USER"],
+    "password": global_vars["PRI_AD_PASS"]
   },
-  "location": {
-    "home_port": {
-      "name": global_vars["PRI_DATA_PORT"],
-      "node": {
-        "name": global_vars["PRI_CLU_NODE1"]
-      }
-    }
-  },
-  "service_policy": {
-    "name": "default-data-files"
-  }
+  "comment": "Created with ONTAP PCL"
 })
 
-print("--> Starting interface create operation")
+print("--> Starting CIFS create operation")
 try:
-	lif.post()
-	print("--> NFS interface \"{}\" created successfully".format(lif.name))
+	cifs.post()
+	print("--> CIFS Server \"{}\" created successfully".format(cifs.name))
 except NetAppRestError as err:
 	print("--> Error: SVM was not created:\n{}".format(err))
 print("")

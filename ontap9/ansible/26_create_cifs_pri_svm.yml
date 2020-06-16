@@ -2,19 +2,19 @@
 
 ################################################################################
 #
-# Title:        27_create_nfslif_pri_svm.yml
+# Title:        26_create_cifs_pri_svm.yml
 # Author:       Adrian Bronder
 # Date:         2020-03-20
-# Description:  Create NFS interface on primary SVM
+# Description:  Create CIFS server on primary SVM
 #               with Ansible modules
 #
-# Modules:      na_ontap_interface
+# Modules:      na_ontap_cifs_server
 #
 # URLs:         http://docs.netapp.com/ontap-9/index.jsp
 #               https://galaxy.ansible.com/netapp/ontap
 #
 # Built-in help:
-# ansible-doc netapp.ontap.na_ontap_interface
+# ansible-doc netapp.ontap.na_ontap_cifs_server
 #
 ################################################################################
 
@@ -34,18 +34,13 @@
     - netapp.ontap
 
   tasks:
-  - name: Create NFS interface on primary SVM
-    na_ontap_interface:
+  - name: Create CIFS server on primary SVM
+    na_ontap_cifs_server:
       state:                 present
-      interface_name:        "{{ PRI_SVM }}_nfs_01"
+      service_state:         started
+      name:                  "{{ PRI_SVM }}"
       vserver:               "{{ PRI_SVM }}"
-      address:               "{{ PRI_SVM_NFS_IP }}"
-      netmask:               "{{ PRI_SVM_NFS_NETMASK }}"
-      home_node:             "{{ PRI_CLU_NODE1 }}"
-      home_port:             "{{ PRI_DATA_PORT }}"
+      domain:                "{{ PRI_AD_DOMAIN }}"
+      admin_user_name:       "{{ PRI_AD_USER }}"
+      admin_password:        "{{ PRI_AD_PASS }}"
       <<: *input
-# FIXME - service_policy added in later release of module collection (20.4.0)
-#      service_policy:        "default-management"
-# Therefore for now firewall_policy and role here:
-      firewall_policy:       data
-      role:                  data

@@ -2,7 +2,7 @@
 
 ################################################################################
 #
-# Title:	28_create_snappolicy.curl
+# Title:	24_create_snappolicy.curl
 # Author:	Adrian Bronder
 # Date:		2020-04-07
 # Description:	Create a snapshot policy on primary SVM
