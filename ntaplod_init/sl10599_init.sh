@@ -1,14 +1,15 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ################################################################################
 #
-# Title:	sl10599_init.sh
-# Author:	Adrian Bronder
-# Date:		2020-09-03
-# Description:	Prepare linux host "rhel1" in LoD lab sl10599
-#		--> "Exploring the ONTAP REST API v1.2"
+# Title:        sl10599_init.sh
+# Author:       Adrian Bronder
+# Date:         2020-09-03
+# Description:  Prepare linux host "rhel1" in LoD lab sl10599
+#               --> "Exploring the ONTAP REST API v1.2"
 #
-# URLs:         https://labondemand.netapp.com/lab/sl10599
+# URLs:         https://labondemand.netapp.com/lab/sl10599 (NetApp + Partner)
+#               https://handsonlabs.netapp.com/lab/ontapapi (Customer)
 #               http://docs.netapp.com/ontap-9/index.jsp
 #               https://pypi.org/project/netapp-ontap/
 #               https://galaxy.ansible.com/netapp/ontap
@@ -27,13 +28,13 @@ pip install --upgrade pip
 echo "--> Installing NetApp Python lib (for ZAPI use)"
 pip install netapp_lib
 
-echo "--> Installing ONTAP and Active IQ Unified Manager collections for Ansible"
-ansible-galaxy collection install netapp.ontap
-ansible-galaxy collection install netapp.um_info
-
 echo "--> Creating links for Python3"
 ln -s /usr/local/bin/python3.7 /usr/bin/python3
 ln -s /usr/local/bin/pip3.7 /usr/bin/pip3
+
+echo "--> Installing ONTAP and Active IQ Unified Manager collections for Ansible"
+ansible-galaxy collection install netapp.ontap
+ansible-galaxy collection install netapp.um_info
 
 echo "--> Creating aggrgates on primary cluster (cluster 1)"
 $(dirname $0)/sl10599_init_cluster.sh
