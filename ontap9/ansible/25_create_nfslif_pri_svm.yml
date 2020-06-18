@@ -44,5 +44,5 @@
       home_node:             "{{ PRI_CLU_NODE1 }}"
       home_port:             "{{ PRI_DATA_PORT }}"
       role:                  data
-      service_policy:        default-data-files
+      protocols:             nfs
       <<: *input

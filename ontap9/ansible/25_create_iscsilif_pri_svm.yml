@@ -46,7 +46,6 @@
       home_port:             "{{ PRI_DATA_PORT }}"
       protocols:             iscsi
       role:                  data
-      service_policy:        default-data-blocks
       <<: *input
 
   - name: Create 2nd iSCSI interface for primary SVM
@@ -60,6 +59,4 @@
       home_port:             "{{ PRI_DATA_PORT }}"
       protocols:             iscsi
       role:                  data
-      service_policy:        default-data-blocks
       <<: *input
-

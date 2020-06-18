@@ -1,0 +1,74 @@
+#!/usr/bin/env ansible-playbook
+
+################################################################################
+#
+# Title:        40_create_iscsiwinlun_all.yml
+# Author:       Adrian Bronder
+# Date:         2020-06-16
+# Description:  Create Windows LUN on existing SVM (end-to-end)
+#               with Ansible modules
+#
+# URLs:         http://docs.netapp.com/ontap-9/index.jsp
+#               https://galaxy.ansible.com/netapp/ontap
+#
+################################################################################
+
+- hosts: localhost
+  gather_facts: false
+  vars:
+    input: &input
+      hostname:       "{{ PRI_CLU }}"
+      username:       "{{ PRI_CLU_USER }}"
+      password:       "{{ PRI_CLU_PASS }}"
+      https:          true
+      validate_certs: false
+      use_rest:       Always
+  vars_files:
+    - ../global.vars
+  collections:
+    - netapp.ontap
+
+  tasks:
+  - name: Create volume on primary SVM
+    na_ontap_volume:
+      state:                 present
+      name:                  "{{ PRI_SVM }}_iscsiwin_01"
+      vserver:               "{{ PRI_SVM }}"
+      size:                  "{{ VOL_SIZE }}"
+      size_unit:             b
+      aggregate_name:        "{{ PRI_AGGR }}"
+      comment:               Created with Ansible
+      space_guarantee:       volume
+      policy:                default
+      volume_security_style: unix
+      <<: *input
+
+  - name: Create lun on primary SVM
+    na_ontap_lun:
+      state:                 present
+      name:                  "{{ PRI_SVM }}_lunwin_01"
+      vserver:               "{{ PRI_SVM }}"
+      flexvol_name:          "{{ PRI_SVM }}_iscsiwin_01"
+      size:                  "{{ LUN_SIZE }}"
+      size_unit:             b
+      space_reserve:         true
+      ostype:                windows
+      <<: *input
+
+  - name: Create igroup on primary SVM
+    na_ontap_igroup:
+      state: present
+      name:                  "{{ PRI_SVM }}_winig_01"
+      vserver:               "{{ PRI_SVM }}"
+      initiator_group_type:  iscsi
+      ostype:                windows
+      initiator:             "{{ WIN_IQN }}"
+      <<: *input
+
+  - name: Create igroup on primary SVM
+    na_ontap_lun_map:
+      state: present
+      vserver:               "{{ PRI_SVM }}"
+      initiator_group_name:  "{{ PRI_SVM }}_winig_01"
+      path:                  "/vol/{{ PRI_SVM }}_iscsiwin_01/{{ PRI_SVM }}_lunwin_01"
+      <<: *input

@@ -82,7 +82,7 @@
     with_items:
         "{{ netapp.ontap_info.igroup_info }}"
     when:
-      - netapp.ontap.igroup_info is defined
+      - netapp.ontap_info.igroup_info is defined
       - netapp.ontap_info.igroup_info[item].vserver == PRI_SVM
 
   - name: Delete primary SVM
