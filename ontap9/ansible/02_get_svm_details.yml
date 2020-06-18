@@ -43,6 +43,7 @@
         - net_dns_info
         - cifs_server_info
         - nfs_info
+        - iscsi_service_info
       <<: *input
     register: netapp
 
@@ -102,3 +103,14 @@
       "{{ netapp.ontap_info.nfs_info }}"
     when:
       - item != ""
+
+  - name: Print NFS details
+    debug:
+      msg:
+        - "SVM:       {{ netapp.ontap_info.iscsi_service_info[item].vserver }}"
+        - "Enabled?:  {{ netapp.ontap_info.iscsi_service_info[item].is_available }}"
+    with_items:
+      "{{ netapp.ontap_info.iscsi_service_info }}"
+    when:
+      - item != ""
+

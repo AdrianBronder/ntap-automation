@@ -42,6 +42,7 @@
         - volume_info
         - qtree_info
         - cifs_share_info
+        - lun_info
       <<: *input
     register: netapp
 
@@ -91,5 +92,17 @@
         - "Path:      {{ netapp.ontap_info.cifs_share_info[item].path }}"
     with_items:
       "{{ netapp.ontap_info.cifs_share_info }}"
+    when:
+      - item != ""
+
+  - name: Print LUN details
+    debug:
+      msg:
+        - "SVM:       {{ netapp.ontap_info.lun_info[item].vserver }}"
+        - "Path:      {{ netapp.ontap_info.lun_info[item].path }}"
+        - "SN#:       {{ netapp.ontap_info.lun_info[item].serial_number }}"
+        - "Size:      {{ netapp.ontap_info.lun_info[item].size }}"
+    with_items:
+      "{{ netapp.ontap_info.lun_info }}"
     when:
       - item != ""
