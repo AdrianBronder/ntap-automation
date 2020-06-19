@@ -43,5 +43,16 @@ pip3 install requests
 echo "--> Installing Ansible"
 pip3 install ansible
 
-echo "--> Installing StorageGRID collection for Ansible"
-ansible-galaxy collection install netapp.storagegrid
+# echo "--> Installing StorageGRID collection for Ansible"
+# ansible-galaxy collection install netapp.storagegrid
+
+echo ""
+echo ""
+echo ">>> MANUAL STEP REQUIRED <<<"
+echo "- Content on Ansible Galaxy cannot be downloaded directly"
+echo "  from this lab environment."
+echo "- Please load 'netapp.storagegrid' collection from another"
+echo "  location and install it manually, e.g.:"
+echo ""
+echo "\# ansible-galaxy collection install ./netapp-storagegrid-20.6.1.tar.gz -p ~/.ansible/collections"
+echo ""

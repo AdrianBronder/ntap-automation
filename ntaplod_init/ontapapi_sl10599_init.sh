@@ -2,7 +2,7 @@
 
 ################################################################################
 #
-# Title:        sl10599_init.sh
+# Title:        ontapapi_sl10599_init.sh
 # Author:       Adrian Bronder
 # Date:         2020-09-03
 # Description:  Prepare linux host "rhel1" in LoD lab sl10599
@@ -35,6 +35,10 @@ ln -s /usr/local/bin/pip3.7 /usr/bin/pip3
 echo "--> Installing ONTAP and Active IQ Unified Manager collections for Ansible"
 ansible-galaxy collection install netapp.ontap
 ansible-galaxy collection install netapp.um_info
+
+echo "--> Installing collections in AWX container"
+docker exec -it awx_task ansible-galaxy collection install netapp.ontap -p /usr/share/ansible/collections -f
+docker exec -it awx_task ansible-galaxy collection install netapp.um_info -p /usr/share/ansible/collections -f
 
 echo "--> Creating aggrgates on primary cluster (cluster 1)"
 $(dirname $0)/sl10599_init_cluster.sh
