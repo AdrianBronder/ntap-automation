@@ -65,7 +65,7 @@
       initiator:             "{{ LIN_IQN }}"
       <<: *input
 
-  - name: Create igroup on primary SVM
+  - name: Map LUN to igroup
     na_ontap_lun_map:
       state: present
       vserver:               "{{ PRI_SVM }}"

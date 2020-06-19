@@ -43,9 +43,6 @@
       netmask:               "{{ PRI_SVM_NETMASK }}"
       home_node:             "{{ PRI_CLU_NODE1 }}"
       home_port:             "{{ PRI_MGMT_PORT }}"
-      <<: *input
-# FIXME - service_policy added in later release of module collection (20.4.0)
-#      service_policy:        "default-management"
-# Therefore for now firewall_policy and role here:
-      firewall_policy:       mgmt
+      service_policy:        "default-management"
       role:                  data
+      <<: *input
