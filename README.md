@@ -16,7 +16,7 @@ If you are a customer, partner or NetApp employee:
 
 3. Initialize the environment by running the lab init script:
    ```
-   ./ntap-automation/ntaplod_init/sl10599_init.sh
+   ./ntap-automation/ntaplod_init/ontapapi_sl10599_init.sh
    ```
 
 4. Execute scripts from subfolders depending on type of solution, method and task, e.g.: ontap9 --> python --> create SVM
