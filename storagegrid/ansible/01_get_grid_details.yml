@@ -1,0 +1,83 @@
+#!/usr/bin/env ansible-playbook
+
+################################################################################
+#
+# Title:        01_get_grid_details.yml 
+# Author:       Adrian Bronder
+# Date:         2020-06-23
+# Description:  Get GRID information
+#               with Ansible and REST APIs
+#
+# Modules:      URI (calling GRID REST APIs)
+#
+# URLs:         https://docs.netapp.com/sgws-113/index.jsp
+#               https://<GRID Admin>/grid/apidocs.html
+#
+################################################################################
+
+- hosts: localhost
+  gather_facts: false
+  vars:
+    input: &input
+      api_url:                 "https://{{ SG_ADMIN_NODE }}"
+      auth_token:              "{{ auth_response.json.data }}"
+      validate_certs:          false
+  vars_files:
+    - ../global.vars
+  collections:
+    - netapp.storagegrid
+
+  tasks:
+  - name: Get GRID authorization token
+    uri:
+      url: "https://{{ SG_ADMIN_NODE }}/api/v3/authorize"
+      method: POST
+      body: {
+        "username":            "{{ SG_ADMIN_USER }}",
+        "password":            "{{ SG_ADMIN_PASSWORD }}",
+        "cookie":              false,
+        "csrfToken":           false
+      }
+      body_format: json
+      validate_certs: false
+    register: auth_response
+
+  - name: Get GRID topology details
+    uri:
+      url: "https://{{ SG_ADMIN_NODE }}/api/v3/grid/health/topology"
+      method: GET
+      headers: {
+        "accept":              "application/json",
+        "Authorization":       "{{ auth_response.json.data }}"
+      }
+      validate_certs: false
+    register: grid_topology
+
+  - name: Get GRID software version
+    uri:
+      url: "https://{{ SG_ADMIN_NODE }}/api/v3/grid/config/product-version"
+      method: GET
+      headers: {
+        "accept":              "application/json",
+        "Authorization":       "{{ auth_response.json.data }}"
+      }
+      validate_certs: false
+    register: grid_product_version
+
+  - name: Print GRID details
+    debug:
+      msg:
+        - "Name:      {{ grid_topology.json.data.name }}"
+        - "Version:   {{ grid_product_version.json.data.productVersion }}"
+
+  - name: Print GRID nodes
+    debug:
+      msg:
+        - "Data Center:        {{ item.0.name }}"
+        - "Node Name:          {{ item.1.name }}"
+        - "Node Type:          {{ item.1.type }}"
+    with_subelements:
+      - "{{ grid_topology.json.data.children }}"
+      - children
+    loop_control:
+      label: "{{ item.0.name }} - {{ item.1.name }}"

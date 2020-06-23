@@ -2,19 +2,16 @@
 
 ################################################################################
 #
-# Title:        21_create_tenant.yml 
+# Title:        02_get_tenant_details.yml 
 # Author:       Adrian Bronder
-# Date:         2020-06-18
-# Description:  Create a tenant on StorageGRID cluster
-#               with Ansible modules
+# Date:         2020-06-23
+# Description:  Get tenant information
+#               with Ansible and REST APIs
 #
-# Modules:      nac_sg_grid_account
+# Modules:      URI (calling GRID REST APIs)
 #
 # URLs:         https://docs.netapp.com/sgws-113/index.jsp
-#               https://galaxy.ansible.com/netapp/storagegrid
-#
-# Built-in help:
-# ansible-doc netapp.storagegrid.nac_sg_grid_account
+#               https://<GRID Admin>/grid/apidocs.html
 #
 ################################################################################
 
@@ -45,14 +42,25 @@
       validate_certs: false
     register: auth_response
 
-  - name: Create GRID tenant
-    nac_sg_grid_account:
-      state:                   present
-      name:                    "{{ TENANT }}"
-      protocol:                s3
-      management:              true
-      use_own_identity_source: true
-      allow_platform_services: true
-      password:                "{{ TENANT_PASSWORD }}"
-      quota_size:              "{{ DEFAULT_QUOTA }}"
-      <<: *input
+  - name: Get GRID tenant accounts
+    uri:
+      url: "https://{{ SG_ADMIN_NODE }}/api/v3/grid/accounts?includeMarker=true"
+      method: GET
+      headers: {
+        "accept":              "application/json",
+        "Authorization":       "{{ auth_response.json.data }}"
+      }
+      validate_certs: false
+    register: grid_tenants
+
+  - name: Print GRID tenants
+    debug:
+      msg:
+        - "Tenant:             {{ item.name }}"
+        - "ID:                 {{ item.id }}"
+        - "Capabilities:       {{ item.capabilities }}"
+        - "Policy:             {{ item.policy }}"
+    with_items:
+      - "{{ grid_tenants.json.data }}"
+    loop_control:
+      label: "{{ item.id }}"

@@ -1,20 +1,24 @@
 #!/usr/bin/env ansible-playbook
 
+##################################
+# --->>> WORK IN PROGRESS <<<--- #
+##################################
+
 ################################################################################
 #
-# Title:        21_create_tenant.yml 
+# Title:        31_create_s3bucket.yml 
 # Author:       Adrian Bronder
 # Date:         2020-06-18
-# Description:  Create a tenant on StorageGRID cluster
+# Description:  Create an S3 bucket on tenant
 #               with Ansible modules
 #
-# Modules:      nac_sg_grid_account
+# Modules:      nac_sg_org_container
 #
 # URLs:         https://docs.netapp.com/sgws-113/index.jsp
 #               https://galaxy.ansible.com/netapp/storagegrid
 #
 # Built-in help:
-# ansible-doc netapp.storagegrid.nac_sg_grid_account
+# ansible-doc netapp.storagegrid.nac_sg_org_container
 #
 ################################################################################
 
@@ -45,14 +49,21 @@
       validate_certs: false
     register: auth_response
 
-  - name: Create GRID tenant
-    nac_sg_grid_account:
-      state:                   present
-      name:                    "{{ TENANT }}"
-      protocol:                s3
-      management:              true
-      use_own_identity_source: true
-      allow_platform_services: true
-      password:                "{{ TENANT_PASSWORD }}"
-      quota_size:              "{{ DEFAULT_QUOTA }}"
-      <<: *input
+  - name: Get tenant account ID
+    uri:
+      url: "https://{{ SG_ADMIN_NODE }}/api/v3/grid/accounts?includeMarker=true"
+      method: GET
+      headers: {
+        "accept":              "application/json",
+        "Authorization":       "{{ auth_response.json.data }}"
+      }
+      validate_certs: false
+    register: grid_tenants
+
+  - name: Get tenant ID by name
+    set_fact:
+      tenant_id: '{{ grid_tenants.json.data | selectattr("name", "equalto", "LOD_ANSIBLE_TEST")| list }}'
+
+  - name: print tenant ID
+    debug:
+      msg: "{{ tenant_id }}"
