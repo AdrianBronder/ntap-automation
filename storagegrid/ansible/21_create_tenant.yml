@@ -37,7 +37,7 @@
       method: POST
       body: {
         "username":            "{{ SG_ADMIN_USER }}",
-        "password":            "{{ SG_ADMIN_PASSWORD }}",
+        "password":            "{{ SG_ADMIN_PASS }}",
         "cookie":              false,
         "csrfToken":           false
       }
@@ -53,6 +53,6 @@
       management:              true
       use_own_identity_source: true
       allow_platform_services: true
-      password:                "{{ TENANT_PASSWORD }}"
+      password:                "{{ TENANT_ROOT_PASS }}"
       quota_size:              "{{ DEFAULT_QUOTA }}"
       <<: *input

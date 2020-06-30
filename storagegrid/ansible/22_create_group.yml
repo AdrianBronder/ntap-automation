@@ -2,19 +2,19 @@
 
 ################################################################################
 #
-# Title:        31_create_s3bucket.yml 
+# Title:        22_create_group.yml 
 # Author:       Adrian Bronder
-# Date:         2020-06-23
-# Description:  Create an S3 bucket on tenant
+# Date:         2020-06-25
+# Description:  Create a group on tenant/org
 #               with Ansible modules
 #
-# Modules:      nac_sg_org_container
+# Modules:      nac_sg_org_group
 #
 # URLs:         https://docs.netapp.com/sgws-113/index.jsp
 #               https://galaxy.ansible.com/netapp/storagegrid
 #
 # Built-in help:
-# ansible-doc netapp.storagegrid.nac_sg_org_container
+# ansible-doc netapp.storagegrid.nac_sg_org_group
 #
 ################################################################################
 
@@ -40,10 +40,10 @@
       url: "https://{{ SG_ADMIN_NODE }}/api/v3/authorize"
       method: POST
       body: {
-        "username":            "{{ SG_ADMIN_USER }}",
-        "password":            "{{ SG_ADMIN_PASS }}",
-        "cookie":              false,
-        "csrfToken":           false
+        "username":                "{{ SG_ADMIN_USER }}",
+        "password":                "{{ SG_ADMIN_PASS }}",
+        "cookie":                  false,
+        "csrfToken":               false
       }
       body_format: json
       validate_certs: false
@@ -54,8 +54,8 @@
       url: "https://{{ SG_ADMIN_NODE }}/api/v3/grid/accounts?includeMarker=true"
       method: GET
       headers: {
-        "accept":              "application/json",
-        "Authorization":       "{{ grid_auth_response.json.data }}"
+        "accept":                  "application/json",
+        "Authorization":           "{{ grid_auth_response.json.data }}"
       }
       validate_certs: false
     register: grid_tenants
@@ -65,7 +65,6 @@
       selected_tenant: '{{ grid_tenants.json.data |
                            selectattr("name", "equalto", TENANT) |
                            list }}'
-#    failed_when: ( selected_tenant | length ) != 1
 
   - name: Check for unique tenant
     fail:
@@ -78,18 +77,29 @@
       url: "https://{{ SG_ADMIN_NODE }}/api/v3/authorize"
       method: POST
       body: {
-        "accountId":           "{{ selected_tenant.0.id }}",
-        "username":            "root",
-        "password":            "{{ TENANT_ROOT_PASS }}",
-        "cookie":              false,
-        "csrfToken":           false
+        "accountId":               "{{ selected_tenant.0.id }}",
+        "username":                "root",
+        "password":                "{{ TENANT_ROOT_PASS }}",
+        "cookie":                  false,
+        "csrfToken":               false
       }
       body_format: json
       validate_certs: false
     register: tenant_auth_response
 
-  - name: Create S3 bucket
-    nac_sg_org_container:
-      state:                   present
-      name:                    "{{ TENANT }}-{{ BUCKET_NAME }}"
+  - name: Create group
+    nac_sg_org_group:
+      state:                       present
+      display_name:                "{{ TENANT }}-{{ GROUP_NAME }}"
+      unique_name:                 "group/{{ TENANT }}-{{ GROUP_NAME }}"
+      management_policy:
+        manage_all_containers:     true
+        manage_endpoints:          true
+        manage_own_s3_credentials: false
+        root_access:               false
+      s3_policy:
+        Statement:
+        - Effect: Allow
+          Action: s3:*
+          Resource: arn:aws:s3:::*
       <<: *input_tenant

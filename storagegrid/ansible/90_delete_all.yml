@@ -1,14 +1,19 @@
 #!/usr/bin/env ansible-playbook
 
+##################################
+# --->>> WORK IN PROGRESS <<<--- #
+##################################
+
 ################################################################################
 #
-# Title:        31_create_s3bucket.yml 
+# Title:        90_delete_all.yml 
 # Author:       Adrian Bronder
-# Date:         2020-06-23
-# Description:  Create an S3 bucket on tenant
+# Date:         2020-06-24
+# Description:  Clean up entire environment
 #               with Ansible modules
 #
-# Modules:      nac_sg_org_container
+# Modules:      nac_sg_grid_account
+#               nac_sg_org_container
 #
 # URLs:         https://docs.netapp.com/sgws-113/index.jsp
 #               https://galaxy.ansible.com/netapp/storagegrid
@@ -65,7 +70,6 @@
       selected_tenant: '{{ grid_tenants.json.data |
                            selectattr("name", "equalto", TENANT) |
                            list }}'
-#    failed_when: ( selected_tenant | length ) != 1
 
   - name: Check for unique tenant
     fail:
@@ -88,8 +92,18 @@
       validate_certs: false
     register: tenant_auth_response
 
-  - name: Create S3 bucket
-    nac_sg_org_container:
-      state:                   present
-      name:                    "{{ TENANT }}-{{ BUCKET_NAME }}"
-      <<: *input_tenant
+#  - name: Delete S3 bucket
+#    s3_bucket:
+#      name:                    "{{ TENANT }}-{{ BUCKET_NAME }}"
+#      s3_url:                  "https://{{ SG_GW_NODE1 }}:8082/"
+#      aws_access_key:          "<access key>"
+#      aws_secret_key:          "<secret>"
+#      validate_certs:          false
+#      state:                   absent
+
+  - name: Delete GRID tenant
+    nac_sg_grid_account:
+      state:                   absent
+      name:                    "{{ selected_tenant.0.name }}"
+      protocol:                s3
+      <<: *input_grid
