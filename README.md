@@ -51,5 +51,5 @@ If you are a customer, partner or NetApp employee:
    
 5. Execute scripts from subfolders depending on type of solution, method and task, e.g.: storagegrid --> ansible --> create tenant
    ```
-   # ./ntap-automation/ontap9/ansible/21_create_tenant.yml
+   # ./ntap-automation/storagegrid/ansible/21_create_tenant.yml
    ```
