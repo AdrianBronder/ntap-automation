@@ -1,9 +1,5 @@
 #!/usr/bin/env ansible-playbook
 
-##################################
-# --->>> WORK IN PROGRESS <<<--- #
-##################################
-
 ################################################################################
 #
 # Title:        90_delete_all.yml 
@@ -114,10 +110,7 @@
       }
     register: tenant_buckets
 
-  - debug:
-      msg: "{{ tenant_buckets }}"
-
-  - name: Delete S3 bucket
+  - name: Delete S3 buckets
     s3_bucket:
       name:                    "{{ item.name }}"
       s3_url:                  "https://{{ SG_GW_NODE1 }}:8082/"
