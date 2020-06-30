@@ -30,45 +30,45 @@
   tasks:
   - name: Get GRID authorization token
     uri:
-      url: "https://{{ SG_ADMIN_NODE }}/api/v3/authorize"
-      method: POST
+      url:                     "https://{{ SG_ADMIN_NODE }}/api/v3/authorize"
+      method:                  POST
+      validate_certs:          false
+      body_format:             json
       body: {
         "username":            "{{ SG_ADMIN_USER }}",
         "password":            "{{ SG_ADMIN_PASS }}",
         "cookie":              false,
         "csrfToken":           false
       }
-      body_format: json
-      validate_certs: false
     register: auth_response
 
   - name: Get GRID topology details
     uri:
-      url: "https://{{ SG_ADMIN_NODE }}/api/v3/grid/health/topology"
-      method: GET
+      url:                     "https://{{ SG_ADMIN_NODE }}/api/v3/grid/health/topology"
+      method:                  GET
+      validate_certs:          false
       headers: {
         "accept":              "application/json",
         "Authorization":       "{{ auth_response.json.data }}"
       }
-      validate_certs: false
     register: grid_topology
 
   - name: Get GRID software version
     uri:
-      url: "https://{{ SG_ADMIN_NODE }}/api/v3/grid/config/product-version"
-      method: GET
+      url:                     "https://{{ SG_ADMIN_NODE }}/api/v3/grid/config/product-version"
+      method:                  GET
+      validate_certs:          false
       headers: {
         "accept":              "application/json",
         "Authorization":       "{{ auth_response.json.data }}"
       }
-      validate_certs: false
     register: grid_product_version
 
   - name: Print GRID details
     debug:
       msg:
-        - "Name:      {{ grid_topology.json.data.name }}"
-        - "Version:   {{ grid_product_version.json.data.productVersion }}"
+        - "Name:               {{ grid_topology.json.data.name }}"
+        - "Version:            {{ grid_product_version.json.data.productVersion }}"
 
   - name: Print GRID nodes
     debug:

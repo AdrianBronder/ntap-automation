@@ -17,11 +17,6 @@
 
 - hosts: localhost
   gather_facts: false
-  vars:
-    input: &input
-      api_url:                 "https://{{ SG_ADMIN_NODE }}"
-      auth_token:              "{{ auth_response.json.data }}"
-      validate_certs:          false
   vars_files:
     - ../global.vars
   collections:
@@ -30,27 +25,27 @@
   tasks:
   - name: Get GRID authorization token
     uri:
-      url: "https://{{ SG_ADMIN_NODE }}/api/v3/authorize"
-      method: POST
+      url:                     "https://{{ SG_ADMIN_NODE }}/api/v3/authorize"
+      method:                  POST
+      validate_certs:          false
+      body_format:             json
       body: {
         "username":            "{{ SG_ADMIN_USER }}",
         "password":            "{{ SG_ADMIN_PASS }}",
         "cookie":              false,
         "csrfToken":           false
       }
-      body_format: json
-      validate_certs: false
-    register: auth_response
+    register: grid_auth_response
 
   - name: Get GRID tenant accounts
     uri:
-      url: "https://{{ SG_ADMIN_NODE }}/api/v3/grid/accounts?includeMarker=true"
-      method: GET
+      url:                     "https://{{ SG_ADMIN_NODE }}/api/v3/grid/accounts"
+      method:                  GET
+      validate_certs:          false
       headers: {
         "accept":              "application/json",
-        "Authorization":       "{{ auth_response.json.data }}"
+        "Authorization":       "{{ grid_auth_response.json.data }}"
       }
-      validate_certs: false
     register: grid_tenants
 
   - name: Print GRID tenants

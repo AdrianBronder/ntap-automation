@@ -2,33 +2,21 @@
 
 ################################################################################
 #
-# Title:        31_create_s3bucket.yml 
+# Title:        03_get_bucket_details.yml 
 # Author:       Adrian Bronder
-# Date:         2020-06-23
-# Description:  Create an S3 bucket on tenant
-#               with Ansible modules
+# Date:         2020-06-30
+# Description:  Get tenant information
+#               with Ansible and REST APIs
 #
-# Modules:      nac_sg_org_container
+# Modules:      URI (calling GRID REST APIs)
 #
 # URLs:         https://docs.netapp.com/sgws-113/index.jsp
-#               https://galaxy.ansible.com/netapp/storagegrid
-#
-# Built-in help:
-# ansible-doc netapp.storagegrid.nac_sg_org_container
+#               https://<GRID Admin>/ui/apidocs.html
 #
 ################################################################################
 
 - hosts: localhost
   gather_facts: false
-  vars:
-    input_grid: &input_grid
-      api_url:                 "https://{{ SG_ADMIN_NODE }}"
-      auth_token:              "{{ grid_auth_response.json.data }}"
-      validate_certs:          false
-    input_tenant: &input_tenant
-      api_url:                 "https://{{ SG_ADMIN_NODE }}"
-      auth_token:              "{{ tenant_auth_response.json.data }}"
-      validate_certs:          false
   vars_files:
     - ../global.vars
   collections:
@@ -49,9 +37,9 @@
       }
     register: grid_auth_response
 
-  - name: Get GRID tenants
+  - name: Get GRID tenant accounts
     uri:
-      url:                     "https://{{ SG_ADMIN_NODE }}/api/v3/grid/accounts?includeMarker=true"
+      url:                     "https://{{ SG_ADMIN_NODE }}/api/v3/grid/accounts"
       method:                  GET
       validate_certs:          false
       headers: {
@@ -65,7 +53,6 @@
       selected_tenant: '{{ grid_tenants.json.data |
                            selectattr("name", "equalto", TENANT) |
                            list }}'
-#    failed_when: ( selected_tenant | length ) != 1
 
   - name: Check for unique tenant
     fail:
@@ -88,8 +75,24 @@
       }
     register: tenant_auth_response
 
-  - name: Create S3 bucket
-    nac_sg_org_container:
-      state:                   present
-      name:                    "{{ TENANT }}-{{ BUCKET_NAME }}"
-      <<: *input_tenant
+  - name: Get S3 buckest from tenant
+    uri:
+      url:                     "https://{{ SG_ADMIN_NODE }}/api/v3/org/containers"
+      method:                  GET
+      validate_certs:          false
+      headers: {
+        "accept":              "application/json",
+        "Authorization":       "{{ tenant_auth_response.json.data }}"
+      }
+    register: tenant_buckets
+
+  - name: Print tenant buckets
+    debug:
+      msg:
+        - "Tenant:             {{ TENANT }}"
+        - "Name:               {{ item.name }}"
+        - "Create Time:        {{ item.creationTime }}"
+    with_items:
+      - "{{ tenant_buckets.json.data }}"
+    loop_control:
+      label: "{{ item.name }}"

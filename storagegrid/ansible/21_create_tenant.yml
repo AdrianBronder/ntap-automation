@@ -33,16 +33,16 @@
   tasks:
   - name: Get GRID authorization token
     uri:
-      url: "https://{{ SG_ADMIN_NODE }}/api/v3/authorize"
-      method: POST
+      url:                     "https://{{ SG_ADMIN_NODE }}/api/v3/authorize"
+      method:                  POST
+      validate_certs:          false
+      body_format:             json
       body: {
         "username":            "{{ SG_ADMIN_USER }}",
         "password":            "{{ SG_ADMIN_PASS }}",
         "cookie":              false,
         "csrfToken":           false
       }
-      body_format: json
-      validate_certs: false
     register: auth_response
 
   - name: Create GRID tenant

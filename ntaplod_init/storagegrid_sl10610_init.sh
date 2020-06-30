@@ -36,9 +36,9 @@ echo "--> Upgrading pip"
 pip install --upgrade pip
 pip3 install --upgrade pip
 
-echo "--> Make sure requests are instaleld"
-pip install requests
-pip3 install requests
+echo "--> Make sure, required packages for Python are installed"
+pip install requests selinux boto3
+pip3 install requests selinux boto3
 
 echo "--> Installing Ansible"
 pip3 install ansible
@@ -52,7 +52,7 @@ echo ">>> MANUAL STEP REQUIRED <<<"
 echo "- Content on Ansible Galaxy cannot be downloaded directly"
 echo "  from this lab environment."
 echo "- Please load 'netapp.storagegrid' collection from another"
-echo "  location and install it manually, e.g.:"
+echo "  location and install it manually with e.g. this command:"
 echo ""
-echo "\# ansible-galaxy collection install ./netapp-storagegrid-20.6.1.tar.gz -p ~/.ansible/collections"
+echo "# ansible-galaxy collection install ./netapp-storagegrid-20.6.1.tar.gz -p ~/.ansible/collections"
 echo ""
