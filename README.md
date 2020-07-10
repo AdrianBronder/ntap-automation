@@ -34,12 +34,12 @@ If you are a customer, partner or NetApp employee:
    - Customer:       https://handsonlabs.netapp.com/lab/storagegrid
    - NetApp/Partner: https://labondemand.netapp.com/lab/sl10610
    
-2. Make sure "git" is installed on the machine:
+2. Log into the first Linux machine (Linux1) and make sure "git" utilities are installed on the machine:
    ```
    # yum install git -y
    ```
    
-3. Log into the first Linux machine (Linux1) and clone this repository:
+3. Clone this repository:
    ```
    # git clone https://github.com/AdrianBronder/ntap-automation.git
    ```
