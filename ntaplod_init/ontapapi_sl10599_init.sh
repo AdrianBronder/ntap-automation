@@ -24,19 +24,25 @@ yum -y install jq
 
 echo "--> Upgrading pip"
 pip install --upgrade pip
+pip3 install --upgrade pip
+
+echo "--> Upgrading Asnible"
+pip3 install --upgrade ansible
 
 echo "--> Installing NetApp Python lib (for ZAPI use)"
-pip install netapp_lib
+pip install --upgrade netapp_lib
+pip3 install --upgrade netapp_lib
 
 echo "--> Creating links for Python3"
-ln -s /usr/local/bin/python3.7 /usr/bin/python3
-ln -s /usr/local/bin/pip3.7 /usr/bin/pip3
+ln -s /usr/local/bin/python3.8 /usr/bin/python3
+ln -s /usr/local/bin/pip3.8 /usr/bin/pip3
 
 echo "--> Installing ONTAP and Active IQ Unified Manager collections for Ansible"
 ansible-galaxy collection install netapp.ontap
 ansible-galaxy collection install netapp.um_info
 
-echo "--> Installing collections in AWX container"
+echo "--> Installing libraries and collections in AWX container"
+docker exec -it awx_task pip3 install --upgrade netapp_lib
 docker exec -it awx_task ansible-galaxy collection install netapp.ontap -p /usr/share/ansible/collections -f
 docker exec -it awx_task ansible-galaxy collection install netapp.um_info -p /usr/share/ansible/collections -f
 

@@ -33,25 +33,29 @@
       password:       "{{ PRI_CLU_PASS }}"
       https:          true
       validate_certs: false
-      use_rest:       Never
+#      use_rest:       Never
   vars_files:
     - ../global.vars
   collections:
     - netapp.ontap
 
   tasks:
-# Condition checks for owning SVM and non-root volumes
   - name: Get Ontap Info
     na_ontap_info:
-      state:           info
+      state:                 info
+      gather_subset:
+        - volume_info
+        - vserver_info
+        - igroup_info
       <<: *input
     register: netapp
 
+# Condition checks for owning SVM and non-root volumes
   - name: Delete volumes of primary SVM
     na_ontap_volume:
-      state:           absent
-      vserver:         "{{ PRI_SVM }}"
-      name:            "{{ netapp.ontap_info.volume_info[item].volume_id_attributes.name }}"
+      state:                 absent
+      vserver:               "{{ PRI_SVM }}"
+      name:                  "{{ netapp.ontap_info.volume_info[item].volume_id_attributes.name }}"
       <<: *input
     with_items:
       "{{ netapp.ontap_info.volume_info }}"
