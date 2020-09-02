@@ -1,0 +1,4 @@
+---
+# defaults file for awxdemo-fulliscsilin-create
+https:          true
+validate_certs: false

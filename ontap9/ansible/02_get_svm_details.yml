@@ -104,7 +104,7 @@
     when:
       - item != ""
 
-  - name: Print NFS details
+  - name: Print iSCSI details
     debug:
       msg:
         - "SVM:       {{ netapp.ontap_info.iscsi_service_info[item].vserver }}"

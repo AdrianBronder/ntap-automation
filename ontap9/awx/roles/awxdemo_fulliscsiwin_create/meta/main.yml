@@ -1,0 +1,7 @@
+galaxy_info:
+  author:              Adrian Bronder
+  description:         Create a Windows LUN on a dedicated volume
+  license:             Apache Licenses 2.0
+  min_ansible_version: 2.8
+  galaxy_tags:         []
+  dependencies:        []

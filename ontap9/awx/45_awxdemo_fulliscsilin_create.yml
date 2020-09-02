@@ -1,0 +1,28 @@
+#!/usr/bin/env ansible-playbook
+
+################################################################################
+#
+# Title:        45_awxdemo_fulliscsilin_create.yml 
+# Author:       Adrian Bronder
+# Date:         2020-09-02
+# Description:  Create a Linux LUN from a role
+#               with Ansible modules
+#
+# URLs:         http://docs.netapp.com/ontap-9/index.jsp
+#               https://galaxy.ansible.com/netapp/ontap
+#
+# Built-in help:
+# ansible-doc netapp.ontap.na_ontap_lun
+#
+################################################################################
+
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+    - ../global.vars
+# Attention: Modules from collections called within role/tasks can't be
+# reference globally in the playbook. Each module has to be specified with
+# its full path!
+
+  roles:
+  - awxdemo_fulliscsilin_create

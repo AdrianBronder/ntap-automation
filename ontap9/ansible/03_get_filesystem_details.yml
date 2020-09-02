@@ -46,20 +46,6 @@
       <<: *input
     register: netapp
 
-# Workaround - qtree currently not included in na_ontap_info
-# Directly calling ONTAP REST API
-# FIXME - qtree_info available since collection 20.4.0 - needs to be changed
-  - name: Get Qtree Info
-    uri:
-      url: "https://{{ PRI_CLU }}/api/storage/qtrees?fields=*"
-      validate_certs: false
-      method: GET
-      headers:
-        Accept: application/json
-      url_username: "{{ PRI_CLU_USER }}"
-      url_password: "{{ PRI_CLU_PASS }}"
-    register: qtree_info
-
   - name: Print volume details
     debug:
       msg:
@@ -75,14 +61,15 @@
   - name: Print qtree details
     debug:
       msg:
-        - "SVM:       {{ item.svm.name }}"
-        - "Style:     {{ item.security_style }}"
-        - "Ex Policy: {{ item.export_policy.name }}"
-        - "Path:      {{ item.path }}"
+        - "SVM:       {{ netapp.ontap_info.qtree_info[item].vserver }}"
+        - "Name:      {{ netapp.ontap_info.qtree_info[item].qtree }}"
+        - "Volume:    {{ netapp.ontap_info.qtree_info[item].volume }}"
+        - "Style:     {{ netapp.ontap_info.qtree_info[item].security_style }}"
+        - "Ex Policy: {{ netapp.ontap_info.qtree_info[item].export_policy }}"
     with_items:
-      "{{ qtree_info.json.records }}"
+      "{{ netapp.ontap_info.qtree_info }}"
     when:
-      item.path is defined
+      - netapp.ontap_info.qtree_info[item].qtree != none
 
   - name: Print CIFS share details
     debug:

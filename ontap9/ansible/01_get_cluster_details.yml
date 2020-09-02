@@ -60,6 +60,8 @@
         - "Name:      {{ netapp.ontap_info.cluster_node_info[item].node_name }}"
     with_items:
       "{{ netapp.ontap_info.cluster_node_info }}"
+    loop_control:
+      label: "{{ item }}"
 
   - name: Print aggregate details
     debug:

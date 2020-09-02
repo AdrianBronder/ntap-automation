@@ -1,0 +1,4 @@
+---
+# defaults file for awxdemo-full-delete
+https:          true
+validate_certs: false

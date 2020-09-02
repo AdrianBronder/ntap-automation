@@ -1,0 +1,7 @@
+galaxy_info:
+  author:              Adrian Bronder
+  description:         Create an NFS exort on a dedicated volume and qtree
+  license:             Apache Licenses 2.0
+  min_ansible_version: 2.8
+  galaxy_tags:         []
+  dependencies:        []

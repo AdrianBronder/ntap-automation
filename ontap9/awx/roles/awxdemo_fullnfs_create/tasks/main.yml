@@ -1,0 +1,33 @@
+---
+- name: Create volume on primary SVM
+  netapp.ontap.na_ontap_volume:
+    state:                 present
+    name:                  "{{ PRI_SVM }}_nfs_01"
+    vserver:               "{{ PRI_SVM }}"
+    size:                  "{{ VOL_SIZE }}"
+    size_unit:             b
+    aggregate_name:        "{{ PRI_AGGR }}"
+    comment:               Created with Ansible
+    space_guarantee:       volume
+    policy:                default
+    junction_path:         "/{{ PRI_SVM }}_nfs_01"
+    volume_security_style: unix
+    hostname:              "{{ PRI_CLU }}"
+    username:              "{{ PRI_CLU_USER }}"
+    password:              "{{ PRI_CLU_PASS }}"
+    https:                 true
+    validate_certs:        false
+
+- name: Create qtree on primary SVM
+  netapp.ontap.na_ontap_qtree:
+    state:                 present
+    name:                  "nfs_01"
+    vserver:               "{{ PRI_SVM }}"
+    flexvol_name:          "{{ PRI_SVM }}_nfs_01"
+    security_style:        unix
+    hostname:              "{{ PRI_CLU }}"
+    username:              "{{ PRI_CLU_USER }}"
+    password:              "{{ PRI_CLU_PASS }}"
+    https:                 true
+    validate_certs:        false
+

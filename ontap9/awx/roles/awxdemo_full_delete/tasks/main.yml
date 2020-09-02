@@ -1,0 +1,77 @@
+---
+- name: Get Ontap Info
+  netapp.ontap.na_ontap_info:
+    state:                 info
+    gather_subset:
+      - volume_info
+      - vserver_info
+      - igroup_info
+    hostname:              "{{ PRI_CLU }}"
+    username:              "{{ PRI_CLU_USER }}"
+    password:              "{{ PRI_CLU_PASS }}"
+    https:                 true
+    validate_certs:        false
+
+  register: netapp
+
+# Condition checks for owning SVM and non-root volumes
+- name: Delete volumes of primary SVM
+  netapp.ontap.na_ontap_volume:
+    state:                 absent
+    vserver:               "{{ PRI_SVM }}"
+    name:                  "{{ netapp.ontap_info.volume_info[item].volume_id_attributes.name }}"
+    hostname:              "{{ PRI_CLU }}"
+    username:              "{{ PRI_CLU_USER }}"
+    password:              "{{ PRI_CLU_PASS }}"
+    https:                 true
+    validate_certs:        false
+  with_items:
+    "{{ netapp.ontap_info.volume_info }}"
+  when:
+    - netapp.ontap_info.volume_info[item].volume_id_attributes.owning_vserver_name == PRI_SVM
+    - netapp.ontap_info.volume_info[item].volume_id_attributes.name is not regex(".*_root")
+
+# Condition check for presence of SVM
+- name: Delete CIFS server on primary SVM
+  netapp.ontap.na_ontap_cifs_server:
+    state:                 absent
+    name:                  "{{ PRI_SVM }}"
+    vserver:               "{{ PRI_SVM }}"
+    domain:                "{{ PRI_AD_DOMAIN }}"
+    admin_user_name:       "{{ PRI_AD_USER }}"
+    admin_password:        "{{ PRI_AD_PASS }}"
+    hostname:              "{{ PRI_CLU }}"
+    username:              "{{ PRI_CLU_USER }}"
+    password:              "{{ PRI_CLU_PASS }}"
+    https:                 true
+    validate_certs:        false
+  when:
+    - netapp.ontap_info.vserver_info[PRI_SVM] is defined
+
+- name: Delete iGroups on primary SVM
+  netapp.ontap.na_ontap_igroup:
+    state:                 absent
+    name:                  "{{ netapp.ontap_info.igroup_info[item].initiator_group_name }}"
+    vserver:               "{{ PRI_SVM }}"
+    hostname:              "{{ PRI_CLU }}"
+    username:              "{{ PRI_CLU_USER }}"
+    password:              "{{ PRI_CLU_PASS }}"
+    https:                 true
+    validate_certs:        false
+  with_items:
+      "{{ netapp.ontap_info.igroup_info }}"
+  when:
+    - netapp.ontap_info.igroup_info is defined
+    - netapp.ontap_info.igroup_info != none
+    - netapp.ontap_info.igroup_info[item].vserver == PRI_SVM
+
+- name: Delete primary SVM
+  netapp.ontap.na_ontap_svm:
+    state:                 absent
+    name:                  "{{ PRI_SVM }}"
+    hostname:              "{{ PRI_CLU }}"
+    username:              "{{ PRI_CLU_USER }}"
+    password:              "{{ PRI_CLU_PASS }}"
+    https:                 true
+    validate_certs:        false
+

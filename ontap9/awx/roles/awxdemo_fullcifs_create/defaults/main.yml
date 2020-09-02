@@ -1,0 +1,4 @@
+---
+# defaults file for awxdemo-fullsvm-create
+https:          true
+validate_certs: false
