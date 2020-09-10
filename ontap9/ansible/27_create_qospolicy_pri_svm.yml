@@ -1,0 +1,44 @@
+#!/usr/bin/env ansible-playbook
+
+################################################################################
+#
+# Title:        21_create_pri_svm.yml 
+# Author:       Adrian Bronder
+# Date:         2020-03-20
+# Description:  Create a primary SVM
+#               with Ansible modules
+#
+# Modules:      na_ontap_svm
+#
+# URLs:         http://docs.netapp.com/ontap-9/index.jsp
+#               https://galaxy.ansible.com/netapp/ontap
+#
+# Built-in help:
+# ansible-doc netapp.ontap.na_ontap_svm
+#
+################################################################################
+
+- hosts: localhost
+  gather_facts: false
+  vars:
+    input: &input
+      hostname:       "{{ PRI_CLU }}"
+      username:       "{{ PRI_CLU_USER }}"
+      password:       "{{ PRI_CLU_PASS }}"
+      https:          true
+      validate_certs: false
+# root_volume_aggregate currently not supported with REST
+#      use_rest:       Always
+  vars_files:
+    - ../global.vars
+  collections:
+    - netapp.ontap
+
+  tasks:
+  - name: Create primary SVM
+    na_ontap_svm:
+      state:                 present
+      name:                  "{{ PRI_SVM }}"
+      root_volume_aggregate: "{{ PRI_AGGR }}"
+      comment:               Created with Ansible
+      <<: *input

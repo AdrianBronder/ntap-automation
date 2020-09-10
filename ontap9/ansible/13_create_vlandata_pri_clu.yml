@@ -1,0 +1,45 @@
+#!/usr/bin/env ansible-playbook
+
+################################################################################
+#
+# Title:        13_create_vlandata_pri_clu.yml 
+# Author:       Adrian Bronder
+# Date:         2020-09-09
+# Description:  Create VLAN for data traffic
+#               with Ansible modules
+#
+# Modules:      na_ontap_net_vlan
+#
+# URLs:         http://docs.netapp.com/ontap-9/index.jsp
+#               https://galaxy.ansible.com/netapp/ontap
+#
+# Built-in help:
+# ansible-doc netapp.ontap.na_ontap_net_vlan
+#
+################################################################################
+
+- hosts: localhost
+  gather_facts: false
+  vars:
+    input: &input
+      hostname:       "{{ PRI_CLU }}"
+      username:       "{{ PRI_CLU_USER }}"
+      password:       "{{ PRI_CLU_PASS }}"
+      https:          true
+      validate_certs: false
+  vars_files:
+    - ../global.vars
+  collections:
+    - netapp.ontap
+
+  tasks:
+  - name: Create VLAN on both nodes of the primary cluster
+    na_ontap_net_vlan:
+      state:                 present
+      vlanid:                "{{ VLAN_DATA }}"
+      node:                  "{{ item }}"
+      parent_interface:      "{{ VLAN_PORT }}"
+      <<: *input
+    with_items:
+    - "{{ PRI_CLU_NODE1 }}"
+    - "{{ PRI_CLU_NODE2 }}"
