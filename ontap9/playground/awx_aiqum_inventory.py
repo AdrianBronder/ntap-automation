@@ -6,8 +6,12 @@
 # Author:       Adrian Bronder
 # Date:         2020-09-07
 # Description:  Custom script for inventory collection with AWX from AIQUM
-# Sources:	https://www.opcito.com/blogs/custom-inventory-management-using-ansible-awx-tower
 #               with Ansible modulesdd
+#
+# Sources:	https://www.opcito.com/blogs/custom-inventory-management-using-ansible-awx-tower
+# 
+# Notice:       Requires custom credential type to add "aiqum_username" and 
+#               "aiqum_password" to environment variables
 #
 ################################################################################
 
@@ -15,6 +19,10 @@ import os
 import sys
 import argparse
 import requests
+import base64
+
+#os.environ["aiqum_username"]=''
+#os.environ["aiqum_password"]=''
 
 try:
         import json
@@ -42,10 +50,11 @@ class ExampleInventory(object):
 
         # Example inventory for testing.
         def example_inventory(self):
+                aiqum_auth_token=base64.b64encode((os.environ.get("aiqum_username")+":"+os.environ.get("aiqum_password")).encode())
+                sys.stderr.write(aiqum_auth_token.decode())
                 headers = {
                         "accept": "application/json",
-                        "authorization": "Basic YWRtaW46TmV0YXBwMSE=",
-                        "UM-CSRF-Token": "c99d971e-909a-401f-9750-43e46ea80dfe"
+                        "authorization": "Basic "+aiqum_auth_token.decode()
                 }
                 url = "https://{}/api/datacenter/cluster/clusters".format("aiqum.demo.netapp.com")
                 try:
@@ -73,26 +82,6 @@ class ExampleInventory(object):
                         inv_clusters["ontap_clusters"]["hosts"].append(cluster["management_ip"])
 
                 return inv_clusters
-
-#               print("NOW I WANT TO LIST CLUSTERS")
-#               print(inv_clusters)
-#
-#               return {
-#                       'group': {
-#                               'hosts': ['192.168.0.101', '192.168.0.102'],
-#                               'vars': {}
-#                       },
-#                       '_meta': {
-#                               'hostvars': {
-#                                       '192.168.0.101': {
-#                                               'host_specific_var': 'foo'
-#                                       },
-#                                       '192.168.0.102': {
-#                                               'host_specific_var': 'bar'
-#                                       }
-#                               }
-#                       }
-#               }
 
         # Empty inventory for testing.
         def empty_inventory(self):
