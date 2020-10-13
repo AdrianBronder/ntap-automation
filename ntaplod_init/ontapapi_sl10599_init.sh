@@ -36,9 +36,10 @@ echo "--> Creating links for Python3"
 ln -s /usr/local/bin/python3.8 /usr/bin/python3
 ln -s /usr/local/bin/pip3.8 /usr/bin/pip3
 
-echo "--> Installing additional ansible collections (ONTAP, UM, AWX)"
+echo "--> Installing additional ansible collections (ONTAP, UM, Windows, AWX)"
 ansible-galaxy collection install netapp.ontap
 ansible-galaxy collection install netapp.um_info
+ansible-galaxy collection install community.windows
 ansible-galaxy collection install awx.awx
 
 echo "--> Installing libraries and collections in AWX container"
