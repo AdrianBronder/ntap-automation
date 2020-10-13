@@ -2,7 +2,7 @@
 
 ################################################################################
 #
-# Title:        48_create_winigroup_pri_svm.yml
+# Title:        48_create_linigroup_pri_svm.yml
 # Author:       Adrian Bronder
 # Date:         2020-06-16
 # Description:  Create igroup on primary SVM

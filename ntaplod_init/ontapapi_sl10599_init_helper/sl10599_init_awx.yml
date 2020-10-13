@@ -1,0 +1,101 @@
+#!/usr/bin/env ansible-playbook
+
+################################################################################
+#
+# Title:        sl10599_init_awx.yml
+# Author:       Adrian Bronder
+# Date:         2020-10-13
+# Description:  Configure AWX on rhel1
+#
+# Collections:  awx.awx
+#
+# URL:          https://galaxy.ansible.com/awx/awx
+#
+# Built-in help:
+# ansible-doc netapp.ontap.na_ontap_svm
+#
+################################################################################
+
+- hosts: localhost
+  gather_facts: false
+  vars:
+    input: &input
+      tower_host:     "http://rhel1.demo.netapp.com"
+      tower_username: "admin"
+      tower_password: "Netapp1!"
+  collections:
+    - awx.awx
+
+  tasks:
+  - name: Create Organization in AWX
+    tower_organization:
+      state:                     present
+      name:                      "NetApp LoD"
+      <<: *input
+
+  - name: Create Project in AWX
+    tower_project:
+      state:                     present
+      name:                      "LoD Demo Git - badrian"
+      description:               "Git repository with ready to use Ansible demos"
+      organization:              "NetApp LoD"
+      scm_type:                  "git"
+      scm_url:                   "https://github.com/AdrianBronder/ntap-automation"
+      scm_update_on_launch:      True
+      scm_update_cache_timeout:  60
+      <<: *input
+
+  - name: Configure AD authentication in AWX
+    tower_settings:
+      settings:
+        AUTH_LDAP_SERVER_URI:    "ldap://dc1.demo.netapp.com"
+        AUTH_LDAP_BIND_DN:       "CN=AWX_Bind,CN=Users,DC=demo,DC=netapp,DC=com"
+        AUTH_LDAP_BIND_PASSWORD: "Netapp1!"
+        AUTH_LDAP_START_TLS:     false
+        AUTH_LDAP_CONNECTION_OPTIONS:
+          OPT_REFERRALS:         0
+          OPT_NETWORK_TIMEOUT:   30
+        AUTH_LDAP_USER_SEARCH:
+          - "DC=demo,DC=netapp,DC=com"
+          - "SCOPE_SUBTREE"
+          - "(sAMAccountName=%(user)s)"
+        AUTH_LDAP_USER_ATTR_MAP:
+          first_name:            "givenName"
+          last_name:             "sn"
+          email:                 "userPrincipalName"
+        AUTH_LDAP_GROUP_SEARCH:
+          - "DC=demo,DC=netapp,DC=com"
+          - "SCOPE_SUBTREE"
+          - "(objectClass=group)"
+        AUTH_LDAP_GROUP_TYPE:    "ActiveDirectoryGroupType"
+        AUTH_LDAP_USER_FLAGS_BY_GROUP:
+          is_superuser:
+            - "CN=Domain Admins,CN=Users,DC=demo,DC=netapp,DC=com"
+        AUTH_LDAP_ORGANIZATION_MAP:
+          NetApp LoD:
+            admins:              "CN=LoD Org Admins,CN=Users,DC=demo,DC=netapp,DC=com"
+            users:
+              - "CN=LoD Org Admins,CN=Users,DC=demo,DC=netapp,DC=com"
+              - "CN=LoD Org Approvers,CN=Users,DC=demo,DC=netapp,DC=com"
+              - "CN=LoD Org Auditors,CN=Users,DC=demo,DC=netapp,DC=com"
+              - "CN=LoD Org Users,CN=Users,DC=demo,DC=netapp,DC=com"
+            remove_admins:       false
+            remove_users:        false
+        AUTH_LDAP_TEAM_MAP:
+          NetApp LoD Administrators:
+            users:               "CN=LoD Org Admins,CN=Users,DC=demo,DC=netapp,DC=com"
+            remove:              false
+            organization:        "NetApp LoD"
+          NetApp LoD Approvers:
+            users:               "CN=LoD Org Approvers,CN=Users,DC=demo,DC=netapp,DC=com"
+            remove:              false
+            organization:        "NetApp LoD"
+          NetApp LoD Auditors:
+            users:               "CN=LoD Org Auditors,CN=Users,DC=demo,DC=netapp,DC=com"
+            remove:              false
+            organization:        "NetApp LoD"
+          NetApp LoD Users:
+            users:               "CN=LoD Org Users,CN=Users,DC=demo,DC=netapp,DC=com"
+            remove:              false
+            organization:        "NetApp LoD"
+      <<: *input

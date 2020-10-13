@@ -2,9 +2,9 @@
 
 ################################################################################
 #
-# Title:        21_create_pri_svm.yml 
+# Title:        27_create_qospolicy_pri_svm.yml 
 # Author:       Adrian Bronder
-# Date:         2020-03-20
+# Date:         2020-10-13 WIP
 # Description:  Create a primary SVM
 #               with Ansible modules
 #
@@ -27,8 +27,6 @@
       password:       "{{ PRI_CLU_PASS }}"
       https:          true
       validate_certs: false
-# root_volume_aggregate currently not supported with REST
-#      use_rest:       Always
   vars_files:
     - ../global.vars
   collections:
@@ -36,9 +34,7 @@
 
   tasks:
   - name: Create primary SVM
-    na_ontap_svm:
+    na_ontap_qos_policy_group:
       state:                 present
       name:                  "{{ PRI_SVM }}"
-      root_volume_aggregate: "{{ PRI_AGGR }}"
-      comment:               Created with Ansible
       <<: *input

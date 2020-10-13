@@ -27,8 +27,6 @@
       password:       "{{ PRI_CLU_PASS }}"
       https:          true
       validate_certs: false
-# root_volume_aggregate currently not supported with REST
-#      use_rest:       Always
   vars_files:
     - ../global.vars
   collections:

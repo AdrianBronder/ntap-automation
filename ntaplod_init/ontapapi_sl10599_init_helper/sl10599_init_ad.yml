@@ -1,0 +1,75 @@
+#!/usr/bin/env ansible-playbook
+
+################################################################################
+#
+# Title:        sl10599_init_ad.yml
+# Author:       Adrian Bronder
+# Date:         2020-10-13
+# Description:  Configure users and groups in Active Directoy
+#
+# Collections:  community.windows
+#
+# URL:          https://galaxy.ansible.com/community/windows
+#
+################################################################################
+
+- hosts: dc1
+  gather_facts: false
+  vars:
+    ad_awx_org_groups:
+      - name: "LoD Org Admins"
+        users:
+          - LoD_Org_Admin_01
+          - LoD_Org_Admin_02
+      - name: "LoD Org Users"
+        users:
+          - LoD_Org_User_01
+          - LoD_Org_User_02
+      - name: "LoD Org Approvers"
+        users:
+          - LoD_Org_Approver_01
+          - LoD_Org_Approver_02
+      - name: "LoD Org Auditors"
+        users:
+          - LoD_Org_Auditor_01
+          - LoD_Org_Auditor_02
+  collections:
+    - community.windows
+
+  tasks:
+  - name: creating AWX LDAP Bind User
+    win_domain_user:
+      state:                       present
+      name:                        "AWX_Bind"
+      path:                        "CN=Users,DC=demo,DC=netapp,DC=com"
+      password:                    "Netapp1!"
+      update_password:             "on_create"
+      password_never_expires:      "yes"
+      user_cannot_change_password: "yes"
+      groups:
+        - "Domain Admins"
+
+  - name: creating LoD Groups in AD
+    win_domain_group:
+      state:                       present
+      name:                        "{{ item.name }}"
+      scope:                       "global"
+      path:                        "CN=Users,DC=demo,DC=netapp,DC=com"
+    loop:
+      "{{ ad_awx_org_groups }}"
+
+  - name: creating LoD Users in AD
+    win_domain_user:
+      state:                       present
+      name:                        "{{ item.1 }}"
+      path:                        "CN=Users,DC=demo,DC=netapp,DC=com"
+      password:                    "Netapp1!"
+      update_password:             "on_create"
+      password_never_expires:      "yes"
+      user_cannot_change_password: "yes"
+      groups:
+        - "{{ item.0.name }}"
+    with_subelements:
+      - "{{ ad_awx_org_groups }}"
+      - users
+

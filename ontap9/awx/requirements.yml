@@ -1,0 +1,8 @@
+---
+collections:
+  - name:    netapp.ontap
+    version: 20.10.0
+  - name:    netapp.um_info
+    version: 20.6.0
+  - name:    awx.awx
+    version: 15.0.0

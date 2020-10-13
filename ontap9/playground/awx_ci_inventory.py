@@ -2,7 +2,7 @@
 
 ################################################################################
 #
-# Title:        awx_aiqum_inventory
+# Title:        awx_ci_inventory
 # Author:       Adrian Bronder
 # Date:         2020-10-01
 # Description:  Custom script for inventory collection with AWX from Cloud Insights
