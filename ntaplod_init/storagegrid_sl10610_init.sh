@@ -43,14 +43,13 @@ pip3 install requests selinux boto3
 echo "--> Installing Ansible"
 pip3 install ansible
 
-# echo "--> Installing StorageGRID collection for Ansible"
-# ansible-galaxy collection install netapp.storagegrid
+echo "--> Installing StorageGRID collection for Ansible"
+ansible-galaxy collection install -f netapp.storagegrid
 
 echo ""
 echo ""
-echo ">>> MANUAL STEP REQUIRED <<<"
-echo "- Content on Ansible Galaxy cannot be downloaded directly"
-echo "  from this lab environment."
+echo ">>> MANUAL STEP MIGHT BE REQUIRED <<<"
+echo "In case downloading collections from Ansible Galaxy fails:"
 echo "- Please load 'netapp.storagegrid' collection from another"
 echo "  location and install it manually with e.g. this command:"
 echo ""
