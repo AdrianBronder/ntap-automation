@@ -141,7 +141,7 @@
   - name: Create S3 bucket
     netapp.storagegrid.na_sg_org_container:
       state:                   present
-      name:                    "{{ TENANT }}-{{ BUCKET_NAME }}"
+      name:                    "{{ BUCKET_NAME }}"
       <<: *input_tenant
     register: create_bucket_results
 
