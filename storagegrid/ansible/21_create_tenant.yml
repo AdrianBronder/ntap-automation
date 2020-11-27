@@ -21,9 +21,9 @@
 - hosts: localhost
   gather_facts: false
   vars:
-    input: &input
+    input_grid: &input_grid
       api_url:                 "https://{{ SG_ADMIN_NODE }}"
-      auth_token:              "{{ auth_response.json.data }}"
+      auth_token:              "{{ grid_auth_response.json.data }}"
       validate_certs:          false
   vars_files:
     - ../global.vars
@@ -43,10 +43,10 @@
         "cookie":              false,
         "csrfToken":           false
       }
-    register: auth_response
+    register: grid_auth_response
 
   - name: Create GRID tenant
-    nac_sg_grid_account:
+    netapp.storagegrid.na_sg_grid_account:
       state:                   present
       name:                    "{{ TENANT }}"
       protocol:                s3
@@ -54,5 +54,8 @@
       use_own_identity_source: true
       allow_platform_services: true
       password:                "{{ TENANT_ROOT_PASS }}"
-      quota_size:              "{{ DEFAULT_QUOTA }}"
-      <<: *input
+      update_password:         on_create
+      quota_size:              "{{ (DEFAULT_QUOTA | int ) * ( 1000 | pow(3) ) | int }}"
+      quota_size_unit:         bytes
+      <<: *input_grid
+    no_log: true

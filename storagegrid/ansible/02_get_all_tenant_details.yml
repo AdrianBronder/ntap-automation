@@ -2,7 +2,7 @@
 
 ################################################################################
 #
-# Title:        02_get_tenant_details.yml 
+# Title:        02_get_all_tenant_details.yml 
 # Author:       Adrian Bronder
 # Date:         2020-06-23
 # Description:  Get tenant information
@@ -17,6 +17,11 @@
 
 - hosts: localhost
   gather_facts: false
+  vars:
+    input_grid: &input_grid
+      api_url:                 "https://{{ SG_ADMIN_NODE }}"
+      auth_token:              "{{ grid_auth_response.json.data }}"
+      validate_certs:          false
   vars_files:
     - ../global.vars
   collections:
@@ -37,15 +42,10 @@
       }
     register: grid_auth_response
 
-  - name: Get GRID tenant accounts
-    uri:
-      url:                     "https://{{ SG_ADMIN_NODE }}/api/v3/grid/accounts"
-      method:                  GET
-      validate_certs:          false
-      headers: {
-        "accept":              "application/json",
-        "Authorization":       "{{ grid_auth_response.json.data }}"
-      }
+  - name: Get Grid Tenants
+    netapp.storagegrid.na_sg_grid_info:
+      gather_subset: grid_accounts_info
+      <<: *input_grid
     register: grid_tenants
 
   - name: Print GRID tenants
@@ -54,8 +54,10 @@
         - "Tenant:             {{ item.name }}"
         - "ID:                 {{ item.id }}"
         - "Capabilities:       {{ item.capabilities }}"
-        - "Policy:             {{ item.policy }}"
+        - "Policy:             Platform Services: {{ item.policy.allowPlatformServices }}, \
+                               Quota: {{ ((item.policy.quotaObjectBytes / 1000 | pow(3)) | int) if item.policy.quotaObjectBytes != none else '--' }} GB, \
+                               Use Identity Source: {{ item.policy.useAccountIdentitySource }}"
     with_items:
-      - "{{ grid_tenants.json.data }}"
+      - "{{ grid_tenants.sg_info['grid/accounts'].data }}"
     loop_control:
       label: "{{ item.id }}"

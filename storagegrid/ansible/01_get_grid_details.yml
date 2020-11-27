@@ -18,7 +18,7 @@
 - hosts: localhost
   gather_facts: false
   vars:
-    input: &input
+    input_grid: &input_grid
       api_url:                 "https://{{ SG_ADMIN_NODE }}"
       auth_token:              "{{ auth_response.json.data }}"
       validate_certs:          false
@@ -42,33 +42,19 @@
       }
     register: auth_response
 
-  - name: Get GRID topology details
-    uri:
-      url:                     "https://{{ SG_ADMIN_NODE }}/api/v3/grid/health/topology"
-      method:                  GET
-      validate_certs:          false
-      headers: {
-        "accept":              "application/json",
-        "Authorization":       "{{ auth_response.json.data }}"
-      }
-    register: grid_topology
-
-  - name: Get GRID software version
-    uri:
-      url:                     "https://{{ SG_ADMIN_NODE }}/api/v3/grid/config/product-version"
-      method:                  GET
-      validate_certs:          false
-      headers: {
-        "accept":              "application/json",
-        "Authorization":       "{{ auth_response.json.data }}"
-      }
-    register: grid_product_version
+  - name: Get Info from Grid
+    netapp.storagegrid.na_sg_grid_info:
+      gather_subset:
+        - grid_health_topology_info
+        - grid_config_product_version_info
+      <<: *input_grid
+    register: grid_info_results
 
   - name: Print GRID details
     debug:
       msg:
-        - "Name:               {{ grid_topology.json.data.name }}"
-        - "Version:            {{ grid_product_version.json.data.productVersion }}"
+        - "Name:               {{ grid_info_results.sg_info['grid/health/topology'].data.name }}"
+        - "Version:            {{ grid_info_results.sg_info['grid/config/product-version'].data.productVersion }}"
 
   - name: Print GRID nodes
     debug:
@@ -77,7 +63,7 @@
         - "Node Name:          {{ item.1.name }}"
         - "Node Type:          {{ item.1.type }}"
     with_subelements:
-      - "{{ grid_topology.json.data.children }}"
+      - "{{ grid_info_results.sg_info['grid/health/topology'].data.children }}"
       - children
     loop_control:
       label: "{{ item.0.name }} - {{ item.1.name }}"

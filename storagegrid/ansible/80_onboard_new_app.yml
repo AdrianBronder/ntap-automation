@@ -1,0 +1,155 @@
+#!/usr/bin/env ansible-playbook
+
+################################################################################
+#
+# Title:        80_onboard_new_app.yml 
+# Author:       Adrian Bronder
+# Date:         2020-06-25
+# Description:  Create a group on tenant/org
+#               with Ansible modules
+#
+# Modules:      nac_sg_org_group
+#
+# URLs:         https://docs.netapp.com/sgws-113/index.jsp
+#               https://galaxy.ansible.com/netapp/storagegrid
+#
+# Built-in help:
+# ansible-doc netapp.storagegrid.nac_sg_org_group
+#
+################################################################################
+
+- hosts: localhost
+  gather_facts: false
+  vars:
+    input_grid: &input_grid
+      api_url:                     "https://{{ SG_ADMIN_NODE }}"
+      auth_token:                  "{{ grid_auth_response.json.data }}"
+      validate_certs:              false
+    input_tenant: &input_tenant
+      api_url:                     "https://{{ SG_ADMIN_NODE }}"
+      auth_token:                  "{{ tenant_auth_response.json.data }}"
+      validate_certs:              false
+  vars_files:
+    - ../new_app.vars
+  collections:
+    - netapp.storagegrid
+
+  tasks:
+  - name: Get GRID authorization token
+    uri:
+      url:                         "https://{{ SG_ADMIN_NODE }}/api/v3/authorize"
+      method:                      POST
+      validate_certs:              false
+      body_format:                 json
+      body: {
+        "username":                "{{ SG_ADMIN_USER }}",
+        "password":                "{{ SG_ADMIN_PASS }}",
+        "cookie":                  false,
+        "csrfToken":               false
+      }
+    register: grid_auth_response
+
+  - name: Create GRID tenant
+    netapp.storagegrid.na_sg_grid_account:
+      state:                   present
+      name:                    "{{ TENANT }}"
+      protocol:                s3
+      management:              true
+      use_own_identity_source: true
+      allow_platform_services: true
+      password:                "{{ TENANT_ROOT_PASS }}"
+      update_password:         on_create
+      quota_size:              "{{ (DEFAULT_QUOTA | int ) * ( 1000 | pow(3) ) | int }}"
+      quota_size_unit:         bytes
+      <<: *input_grid
+    register: create_tenant_results
+
+  - name: Set Tenant ID for Tenant
+    set_fact:
+      tenant_id: "{{ create_tenant_results.resp.id }}"
+
+  - name: Get tenant authorization token
+    uri:
+      url:                         "https://{{ SG_ADMIN_NODE }}/api/v3/authorize"
+      method:                      POST
+      validate_certs:              false
+      body_format:                 json
+      body: {
+        "accountId":               "{{ tenant_id }}",
+        "username":                "root",
+        "password":                "{{ TENANT_ROOT_PASS }}",
+        "cookie":                  false,
+        "csrfToken":               false
+      }
+    register: tenant_auth_response
+
+  - name: Create tenant group
+    netapp.storagegrid.na_sg_org_group:
+      state:                       present
+      display_name:                "{{ TENANT }}-{{ TENANT_GROUP_NAME }}"
+      unique_name:                 "group/{{ TENANT }}-{{ TENANT_GROUP_NAME }}"
+      management_policy:
+        manage_all_containers:     true
+        manage_endpoints:          true
+        manage_own_s3_credentials: false
+        root_access:               false
+      s3_policy:
+        Statement:
+        - Effect: Allow
+          Action: s3:*
+          Resource: arn:aws:s3:::*
+      <<: *input_tenant
+    register: create_group_results
+
+  - name: Create tenant user
+    netapp.storagegrid.na_sg_org_user:
+      state:                       present
+      full_name:                   "{{ TENANT_USER_NAME }}"
+      unique_name:                 "user/{{ TENANT }}-{{ TENANT_USER_NAME }}"
+      password:                    "{{ TENANT_USER_PASS }}"
+      update_password:             on_create
+      member_of:                   "group/{{ TENANT }}-{{ TENANT_GROUP_NAME }}"
+      <<: *input_tenant
+    no_log: true
+    register: create_user_results
+
+  - name: Create S3 user credentials
+    netapp.storagegrid.na_sg_org_user_s3_key:
+      state:                       present
+      unique_user_name:            "user/{{ TENANT }}-{{ TENANT_USER_NAME }}"
+      <<: *input_tenant
+    register: s3_key_results
+
+  - name: Check folder for storing credentials
+    stat:
+      path:                        "{{ S3_KEY_DIRECTORY }}"
+    register: s3cred_folder
+
+  - name: Create directory if it does not exist
+    file:
+      path:                        "{{ S3_KEY_DIRECTORY }}"
+      state:                       directory
+    when:
+      not s3cred_folder.stat.exists
+
+  - name: Write credentials to file
+    copy:
+      content:                     "{{ s3_key_results.resp }}"
+      dest:                        "../cred_store/{{ TENANT }}-{{ TENANT_USER_NAME }}"
+    register: s3_key_file_results
+
+  - name: Create S3 bucket
+    netapp.storagegrid.na_sg_org_container:
+      state:                   present
+      name:                    "{{ TENANT }}-{{ BUCKET_NAME }}"
+      <<: *input_tenant
+    register: create_bucket_results
+
+  - name: Display Creation Results 
+    debug: 
+      msg: 
+        - "Onboarding Complete:"
+        - "Tenant: {{ create_tenant_results.resp.name }} ({{ create_tenant_results.resp.id }})"
+        - "User:   {{ create_user_results.resp.fullName }} as member of group: {{ create_group_results.resp.displayName }}"
+        - "S3 Access keys are available: {{ s3_key_file_results.dest | default('n/a') }}"
+        - "Bucket: {{ create_bucket_results.resp.name }}"
