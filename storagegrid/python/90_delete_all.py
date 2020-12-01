@@ -14,6 +14,7 @@
 ################################################################################
 
 import json, os, sys
+import boto3
 import requests
 
 ### Define Functions
@@ -99,16 +100,27 @@ tenant_auth = requests.post('https://' + global_vars["SG_ADMIN_NODE"] + '/api/v3
 ### Step 5 - Delete Buckets
 bucket_list = get_info(_url('/org/containers'), tenant_auth)
 
-for bucket in bucket_list:
-	bucket_del_resp = requests.delete('https://' + global_vars["SG_ADMIN_NODE"] + '/api/v3/org/containers/{}'.format(bucket['name']),
+s3creds_resp = requests.post('https://' + global_vars["SG_ADMIN_NODE"] + '/api/v3//org/users/00000000-0000-0000-0000-000000000000/s3-access-keys',
+				data=json.dumps({}),
 				headers={'Content-Type':'application/json', 'accept':'application/json', 'authorization': 'Bearer {}'.format(tenant_auth)},
-				verify=False)
+				verify=False).json()
 
-	if bucket_del_resp.status_code == 204:
+s3_accesskey = s3creds_resp['data']['accessKey']
+s3_secretkey = s3creds_resp['data']['secretAccessKey']
+
+client = boto3.client(service_name="s3",
+					endpoint_url="https://{}".format(global_vars["SG_GW_NODE1"]),
+					verify=False,
+					aws_access_key_id = s3_accesskey,
+					aws_secret_access_key = s3_secretkey)
+
+for bucket in bucket_list:
+	bucket_del_resp = client.delete_bucket(Bucket=bucket['name'])
+
+	if bucket_del_resp['ResponseMetadata']['HTTPStatusCode'] == 204:
 		print('Bucket {} deleted'.format(bucket['name']))
 	else:
-		print('\nError: {0} - {1}\n'.format(bucket_del_resp['code'], bucket_del_resp['message']['text']))
-
+		print ("Delete bucket failed - Code {}".format(bucket_del_resp['ResponseMetadata']['HTTPStatusCode']))
 
 ### Step 6 - Delete Tenant
 tenant_del_resp = requests.delete('https://' + global_vars["SG_ADMIN_NODE"] + '/api/v3/grid/accounts/{}'.format(tenant_id),
