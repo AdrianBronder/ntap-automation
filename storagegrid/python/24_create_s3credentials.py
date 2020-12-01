@@ -51,7 +51,7 @@ def get_id(element, element_list):
 		return elements[0]['id']
 
 ### Step 1 - Read in global variables
-with open(os.path.dirname(sys.argv[0])+'../global.vars') as json_file:
+with open(os.path.dirname(sys.argv[0])+'/../global.vars') as json_file:
 	global_vars = json.load(json_file)
 
 
