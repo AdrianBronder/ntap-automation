@@ -45,7 +45,7 @@ pip3 install ansible
 
 echo "--> Adding line to ignore warnings in .bashrc"
 echo 'export PYTHONWARNINGS="ignore:Unverified HTTPS request"' >> ~/.bashrc
-source ~/.bashrc
+export PYTHONWARNINGS="ignore:Unverified HTTPS request"
 
 # echo "--> Installing StorageGRID collection for Ansible"
 ansible-galaxy collection install netapp.storagegrid
