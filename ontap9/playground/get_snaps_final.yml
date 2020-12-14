@@ -1,0 +1,83 @@
+#!/usr/bin/env ansible-playbook
+
+################################################################################
+#
+# Title:        get_snaps.yml
+# Author:       Adrian Bronder
+# Date:         2020-12-14
+# Description:  Query snapshot information
+#               with Ansible modules
+#
+# Modules:      na_ontap_info
+#
+# URLs:         http://docs.netapp.com/ontap-9/index.jsp
+#               https://galaxy.ansible.com/netapp/ontap
+#
+# Built-in help:
+# ansible-doc netapp.ontap.na_ontap_info
+#
+################################################################################
+
+- hosts: localhost
+  gather_facts: false
+  vars:
+    input: &input
+      hostname:       "{{ PRI_CLU }}"
+      username:       "{{ PRI_CLU_USER }}"
+      password:       "{{ PRI_CLU_PASS }}"
+      https:          true
+      validate_certs: false
+    searchtags:
+      vserver:        "{{ PRI_SVM }}"
+      volume:         "{{ PRI_SVM }}_cifs_01"
+      snapshots:      "snap*"
+  vars_files:
+    - ../global.vars
+  collections:
+    - netapp.ontap
+
+  tasks:
+  - name: Get Volume Info
+    na_ontap_info:
+      state: info
+      gather_subset:
+        - volume_info
+      <<: *input
+    register: ontap_volumes
+
+  - name: Get Snapshot Info
+    na_ontap_info:
+      state: info
+      gather_subset:
+        - snapshot_info
+      desired_attributes:
+        snapshot-info:
+          - access-time
+          - name
+          - volume
+          - vserver
+      query:
+        snapshot-info:
+          vserver:    "{{ searchtags.vserver }}"
+          volume:     "{{ searchtags.volume }}"
+          name:       "{{ searchtags.snapshots }}"
+      <<: *input
+    register: ontap_snapshots
+
+  - name: Print volume details
+    debug:
+      msg:
+        - "SVM:       {{ ontap_volumes.ontap_info.volume_info[item].volume_id_attributes.owning_vserver_name }}"
+        - "Name:      {{ ontap_volumes.ontap_info.volume_info[item].volume_id_attributes.name }}"
+        - "Size:      {{ ontap_volumes.ontap_info.volume_info[item].volume_space_attributes.size }}"
+        - "Used:      {{ ontap_volumes.ontap_info.volume_info[item].volume_space_attributes.size_used }}"
+    loop:
+      "{{ ontap_volumes.ontap_info.volume_info.keys() }}"
+    when:
+      - ontap_volumes.ontap_info.volume_info[item].volume_id_attributes.name == searchtags.volume
+      - ontap_volumes.ontap_info.volume_info[item].volume_id_attributes.owning_vserver_name == searchtags.vserver
+
+  - name: Print snapshot details
+    debug:
+      msg:
+        - "{{ ontap_snapshots.ontap_info.snapshot_info }}"

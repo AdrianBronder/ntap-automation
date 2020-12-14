@@ -68,7 +68,7 @@
     with_items:
       "{{ netapp.ontap_info.qtree_info }}"
     when:
-      - netapp.ontap_info.qtree_info[item].qtree != none
+      - netapp.ontap_info.qtree_info[item].qtree is defined
 
   - name: Print CIFS share details
     debug:
