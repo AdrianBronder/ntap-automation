@@ -50,22 +50,17 @@
       }
     register: grid_auth_response
 
-  - name: Get GRID tenants
-    uri:
-      url:                     "https://{{ SG_ADMIN_NODE }}/api/v3/grid/accounts"
-      method:                  GET
-      validate_certs:          false
-      headers: {
-        "accept":              "application/json",
-        "Authorization":       "{{ grid_auth_response.json.data }}"
-      }
+  - name: Get Grid Tenants
+    netapp.storagegrid.na_sg_grid_info:
+      gather_subset: grid_accounts_info
+      <<: *input_grid
     register: grid_tenants
 
   - name: Get tenant by name
     set_fact:
-      selected_tenant: '{{ grid_tenants.json.data |
-                           selectattr("name", "equalto", TENANT) |
-                           list }}'
+      selected_tenant: "{{ grid_tenants.sg_info['grid/accounts'].data |
+                        selectattr('name', 'equalto', TENANT) |
+                        list }}"
 
   - name: Check for unique tenant
     fail:
@@ -99,30 +94,24 @@
     when:
       s3cred_file.stat.exists
 
-  - name: Get S3 buckest from tenant
-    uri:
-      url:                     "https://{{ SG_ADMIN_NODE }}/api/v3/org/containers"
-      method:                  GET
-      validate_certs:          false
-      headers: {
-        "accept":              "application/json",
-        "Authorization":       "{{ tenant_auth_response.json.data }}"
-      }
+  - name: Get Buckets for Tenant - {{ TENANT }}
+    netapp.storagegrid.na_sg_org_info:
+      gather_subset: org/containers
+      <<: *input_tenant
     register: tenant_buckets
 
   - name: Delete S3 buckets
     s3_bucket:
       name:                    "{{ item.name }}"
-      s3_url:                  "https://{{ SG_GW_NODE1 }}:8082/"
+      s3_url:                  "https://{{ SG_GW_NODE1 }}/"
       aws_access_key:          "{{ s3cred.accessKey }}"
       aws_secret_key:          "{{ s3cred.secretAccessKey }}"
       validate_certs:          false
       state:                   absent
-    with_items:
-      "{{ tenant_buckets.json.data }}"
+    loop: "{{ tenant_buckets.sg_info['org/containers'].data }}"
 
   - name: Delete GRID tenant
-    nac_sg_grid_account:
+    netapp.storagegrid.na_sg_grid_account:
       state:                   absent
       name:                    "{{ selected_tenant.0.name }}"
       protocol:                s3

@@ -2,16 +2,16 @@
 
 ################################################################################
 #
-# Title:        03_get_bucket_details.yml 
+# Title:        02_get_single_tenant_details.yml 
 # Author:       Adrian Bronder
-# Date:         2020-06-30
+# Date:         2020-06-23
 # Description:  Get tenant information
 #               with Ansible and REST APIs
 #
 # Modules:      URI (calling GRID REST APIs)
 #
 # URLs:         https://docs.netapp.com/sgws-113/index.jsp
-#               https://<GRID Admin>/ui/apidocs.html
+#               https://<GRID Admin>/grid/apidocs.html
 #
 ################################################################################
 
@@ -19,9 +19,9 @@
   gather_facts: false
   vars:
     input_grid: &input_grid
-      api_url:                     "https://{{ SG_ADMIN_NODE }}"
-      auth_token:                  "{{ grid_auth_response.json.data }}"
-      validate_certs:              false
+      api_url:                 "https://{{ SG_ADMIN_NODE }}"
+      auth_token:              "{{ grid_auth_response.json.data }}"
+      validate_certs:          false
     input_tenant: &input_tenant
       api_url:                     "https://{{ SG_ADMIN_NODE }}"
       auth_token:                  "{{ tenant_auth_response.json.data }}"
@@ -64,34 +64,37 @@
     when:
       ( selected_tenant | length ) != 1
 
-  - name: Get tenant authorization token
+  - name: Get Tenant Authorization Token
     uri:
-      url:                     "https://{{ SG_ADMIN_NODE }}/api/v3/authorize"
-      method:                  POST
-      validate_certs:          false
-      body_format:             json
+      url: "https://{{ SG_ADMIN_NODE }}/api/v3/authorize"
+      method: POST
       body: {
-        "accountId":           "{{ selected_tenant.0.id }}",
-        "username":            "root",
-        "password":            "{{ TENANT_ROOT_PASS }}",
-        "cookie":              false,
-        "csrfToken":           false
+        "accountId": "{{ selected_tenant.0.id }}",
+        "username": "root",
+        "password": "{{ TENANT_ROOT_PASS }}",
+        "cookie": true,
+        "csrfToken": false
       }
+      body_format: json
+      validate_certs: false
     register: tenant_auth_response
 
-  - name: Get Buckets for Tenant - {{ TENANT }}
+  - name: Get Info for Tenant - {{ TENANT }}
     netapp.storagegrid.na_sg_org_info:
-      gather_subset: org/containers
+      gather_subset: 
+        - org/config
+        - org/usage
       <<: *input_tenant
-    register: tenant_buckets
+    register: tenant_info_response
 
-  - name: Print tenant buckets
+  - name: Print GRID tenants
     debug:
       msg:
-        - "Tenant:             {{ TENANT }}"
-        - "Name:               {{ item.name }}"
-        - "Create Time:        {{ item.creationTime }}"
-    with_items:
-      - "{{ tenant_buckets.sg_info['org/containers'].data }}"
-    loop_control:
-      label: "{{ item.name }}"
+        - "Tenant:             {{ tenant_info_response.sg_info['org/config'].data.account.name }}"
+        - "ID:                 {{ tenant_info_response.sg_info['org/config'].data.account.id }}"
+        - "Capabilities:       {{ tenant_info_response.sg_info['org/config'].data.account.capabilities.0 }}, {{ tenant_info_response.sg_info['org/config'].data.account.capabilities.1 }}"
+        - "Policy:             Platform Services: {{ tenant_info_response.sg_info['org/config'].data.account.policy.allowPlatformServices }}, \
+                               Quota: {{ ((tenant_info_response.sg_info['org/config'].data.account.policy.quotaObjectBytes / 1000 | pow(3)) | int) if tenant_info_response.sg_info['org/config'].data.account.policy.quotaObjectBytes != none else '--' }} GB, \
+                               Use Identity Source: {{ tenant_info_response.sg_info['org/config'].data.account.policy.useAccountIdentitySource }}"
+        - "Usage:              {{ tenant_info_response.sg_info['org/usage'].data.dataBytes / 1000 | pow(3) | int }} GB - {{ tenant_info_response.sg_info['org/usage'].data.objectCount }} Objects"
+

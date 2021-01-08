@@ -2,16 +2,20 @@
 
 ################################################################################
 #
-# Title:        03_get_bucket_details.yml 
+# Title:        91_delete_new_app.yml 
 # Author:       Adrian Bronder
-# Date:         2020-06-30
-# Description:  Get tenant information
-#               with Ansible and REST APIs
+# Date:         2020-06-24
+# Description:  Clean up entire environment
+#               with Ansible modules
 #
-# Modules:      URI (calling GRID REST APIs)
+# Modules:      nac_sg_grid_account
+#               nac_sg_org_container
 #
 # URLs:         https://docs.netapp.com/sgws-113/index.jsp
-#               https://<GRID Admin>/ui/apidocs.html
+#               https://galaxy.ansible.com/netapp/storagegrid
+#
+# Built-in help:
+# ansible-doc netapp.storagegrid.nac_sg_org_container
 #
 ################################################################################
 
@@ -19,15 +23,15 @@
   gather_facts: false
   vars:
     input_grid: &input_grid
-      api_url:                     "https://{{ SG_ADMIN_NODE }}"
-      auth_token:                  "{{ grid_auth_response.json.data }}"
-      validate_certs:              false
+      api_url:                 "https://{{ SG_ADMIN_NODE }}"
+      auth_token:              "{{ grid_auth_response.json.data }}"
+      validate_certs:          false
     input_tenant: &input_tenant
-      api_url:                     "https://{{ SG_ADMIN_NODE }}"
-      auth_token:                  "{{ tenant_auth_response.json.data }}"
-      validate_certs:              false
+      api_url:                 "https://{{ SG_ADMIN_NODE }}"
+      auth_token:              "{{ tenant_auth_response.json.data }}"
+      validate_certs:          false
   vars_files:
-    - ../global.vars
+    - ../new_app.vars
   collections:
     - netapp.storagegrid
 
@@ -79,19 +83,36 @@
       }
     register: tenant_auth_response
 
+  - name: Check existence of S3 credentials
+    stat:
+      path:                    "../cred_store/{{ TENANT }}-{{ TENANT_USER_NAME }}"
+    register: s3cred_file
+
+  - name: Read S3 credentials
+    set_fact:
+      s3cred: "{{ lookup('file', '../cred_store/{{ TENANT }}-{{ TENANT_USER_NAME }}')}}"
+    when:
+      s3cred_file.stat.exists
+
   - name: Get Buckets for Tenant - {{ TENANT }}
     netapp.storagegrid.na_sg_org_info:
       gather_subset: org/containers
       <<: *input_tenant
     register: tenant_buckets
 
-  - name: Print tenant buckets
-    debug:
-      msg:
-        - "Tenant:             {{ TENANT }}"
-        - "Name:               {{ item.name }}"
-        - "Create Time:        {{ item.creationTime }}"
-    with_items:
-      - "{{ tenant_buckets.sg_info['org/containers'].data }}"
-    loop_control:
-      label: "{{ item.name }}"
+  - name: Delete S3 buckets
+    s3_bucket:
+      name:                    "{{ item.name }}"
+      s3_url:                  "https://{{ SG_GW_NODE1 }}/"
+      aws_access_key:          "{{ s3cred.accessKey }}"
+      aws_secret_key:          "{{ s3cred.secretAccessKey }}"
+      validate_certs:          false
+      state:                   absent
+    loop: "{{ tenant_buckets.sg_info['org/containers'].data }}"
+
+  - name: Delete GRID tenant
+    netapp.storagegrid.na_sg_grid_account:
+      state:                   absent
+      name:                    "{{ selected_tenant.0.name }}"
+      protocol:                s3
+      <<: *input_grid

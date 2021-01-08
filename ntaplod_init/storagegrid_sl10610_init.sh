@@ -43,13 +43,19 @@ pip3 install requests selinux boto3
 echo "--> Installing Ansible"
 pip3 install ansible
 
-echo "--> Installing StorageGRID collection for Ansible"
+# echo "--> Installing StorageGRID collection for Ansible"
 ansible-galaxy collection install -f netapp.storagegrid
+
+echo "--> Adding line to ignore warnings in .bashrc"
+echo 'export PYTHONWARNINGS="ignore:Unverified HTTPS request"' >> ~/.bashrc
+export PYTHONWARNINGS="ignore:Unverified HTTPS request"
+
 
 echo ""
 echo ""
-echo ">>> MANUAL STEP MIGHT BE REQUIRED <<<"
-echo "In case downloading collections from Ansible Galaxy fails:"
+echo ">>> MANUAL STEP REQUIRED <<<"
+echo "- Content on Ansible Galaxy cannot be downloaded directly"
+echo "  from this lab environment."
 echo "- Please load 'netapp.storagegrid' collection from another"
 echo "  location and install it manually with e.g. this command:"
 echo ""
