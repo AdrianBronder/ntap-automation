@@ -43,12 +43,12 @@ pip3 install requests selinux boto3
 echo "--> Installing Ansible"
 pip3 install ansible
 
+# echo "--> Installing StorageGRID collection for Ansible"
+ansible-galaxy collection install -f netapp.storagegrid
+
 echo "--> Adding line to ignore warnings in .bashrc"
 echo 'export PYTHONWARNINGS="ignore:Unverified HTTPS request"' >> ~/.bashrc
 export PYTHONWARNINGS="ignore:Unverified HTTPS request"
-
-# echo "--> Installing StorageGRID collection for Ansible"
-ansible-galaxy collection install netapp.storagegrid
 
 echo ""
 echo ""

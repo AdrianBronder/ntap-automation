@@ -51,7 +51,7 @@
       msg:
         - "Name:      {{ netapp.ontap_info.cluster_identity_info.keys() | list | first }}"
         - "IP:        {{ netapp.ontap_info.net_interface_info.cluster_mgmt.address }}"
-        - "Version:   {{ netapp.ontap_info.cluster_image_info.keys() | list | first }}"
+        - "Version:   {{ netapp.ontap_info.cluster_image_info['cluster1-01'].current_version }}"
 
   - name: Print node details
     debug:

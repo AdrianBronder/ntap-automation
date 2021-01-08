@@ -1,0 +1,88 @@
+#!/usr/bin/env ansible-playbook
+
+################################################################################
+#
+# Title:        get_snap_rest.yml
+# Author:       Adrian Bronder
+# Date:         2020-12-14
+# Description:  Get filesystem information
+#               with Ansible modules
+#
+# Modules:      na_ontap_rest_info
+#
+# URLs:         http://docs.netapp.com/ontap-9/index.jsp
+#               https://galaxy.ansible.com/netapp/ontap
+#
+# Built-in help:
+# ansible-doc netapp.ontap.na_ontap_rest_info
+#
+################################################################################
+
+- hosts: localhost
+  gather_facts: false
+  vars:
+    input: &input
+      hostname:       "{{ PRI_CLU }}"
+      username:       "{{ PRI_CLU_USER }}"
+      password:       "{{ PRI_CLU_PASS }}"
+      https:          true
+      validate_certs: false
+    searchtags:
+      svm:            "{{ PRI_SVM }}"
+      volume:         "{{ PRI_SVM }}_cifs_01"
+      snapshot:       "hourly*"
+  vars_files:
+    - ../global.vars
+  collections:
+    - netapp.ontap
+
+  tasks:
+  - name: Get Volume Info
+    na_ontap_rest_info:
+      state: info
+      gather_subset:
+        - volume_info
+      parameters:
+        name:         "{{ searchtags.volume }}"
+        svm.name:     "{{ searchtags.svm }}"
+      fields:
+        - '*'
+      <<: *input
+    register: ontap_volumes
+
+  - name: Set Volume UUID
+    set_fact:
+      volume_uuid: "{{ ontap_volumes.ontap_info['storage/volumes'].records[0].uuid }}"
+
+  - name: Get Snapshot Info
+    uri:
+       url:           "https://{{ input.hostname }}/api/storage/volumes/{{ volume_uuid }}\
+                      /snapshots?fields=create_time,svm.name,volume.name&name={{ searchtags.snapshot }}"
+       user:          "{{ input.username }}"
+       password:      "{{ input.password }}"
+       method:        "GET"
+    register: ontap_snapshots
+
+  - name: Print volume details
+    debug:
+      msg:
+        - "SVM:       {{ item.svm.name }}"
+        - "Name:      {{ item.name }}"
+        - "Size:      {{ item.space.size }}"
+        - "Used:      {{ item.space.used }}"
+    loop:
+      "{{ ontap_volumes.ontap_info['storage/volumes'].records }}"
+    loop_control:
+      label: "{{ item.name }}"
+
+  - name: Print snapshot details
+    debug:
+      msg:
+        - "SVM:       {{ item.svm.name }}"
+        - "Volume:    {{ item.volume.name }}"
+        - "Name:      {{ item.name }}"
+        - "Created:   {{ item.create_time }}"
+    loop:
+      "{{ ontap_snapshots.json.records }}"
+    loop_control:
+      label: "{{ item.name }}"
