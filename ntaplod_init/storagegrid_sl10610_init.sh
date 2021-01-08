@@ -50,7 +50,6 @@ echo "--> Adding line to ignore warnings in .bashrc"
 echo 'export PYTHONWARNINGS="ignore:Unverified HTTPS request"' >> ~/.bashrc
 export PYTHONWARNINGS="ignore:Unverified HTTPS request"
 
-
 echo ""
 echo ""
 echo ">>> MANUAL STEP REQUIRED <<<"
