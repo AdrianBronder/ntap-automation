@@ -1,0 +1,83 @@
+#!/usr/bin/env ansible-playbook
+
+################################################################################
+#
+# Title:        05_check_cluster_silent.yml
+# Author:       Adrian Bronder
+# Date:         2021-02-03
+# Description:  Run a series of check routines against a cluster
+#               with Ansible modules
+#
+# Modules:      na_ontap_info
+#               fail (ansible.builtin)
+#
+# URLs:         http://docs.netapp.com/ontap-9/index.jsp
+#               https://galaxy.ansible.com/netapp/ontap
+#
+# Built-in help:
+# ansible-doc netapp.ontap.na_ontap_info
+#
+################################################################################
+
+- hosts: localhost
+  gather_facts: false
+  vars:
+    input: &input
+      hostname:       "{{ PRI_CLU }}"
+      username:       "{{ PRI_CLU_USER }}"
+      password:       "{{ PRI_CLU_PASS }}"
+      https:          true
+      validate_certs: false
+  vars_files:
+    - ../global.vars
+  collections:
+    - netapp.ontap
+
+  tasks:
+  - name: Get Ontap Info
+    na_ontap_info:
+      gather_subset:
+        - subsys_health_info
+        - aggregate_info
+      <<: *input
+    register: netapp
+
+  - name: Fail on unhealthy subsystem status
+    ansible.builtin.fail:
+      msg: "check failed on {{ item.key }}"
+    when:
+      - item.value.health != "ok"
+    loop:
+      "{{ lookup('dict', netapp.ontap_info.subsys_health_info ) }}"
+    loop_control:
+      label: "{{ item.key }}"
+#    ignore_errors: yes
+
+  - name: Fail on offline aggregates
+    ansible.builtin.fail:
+      msg: "check failed on {{ item.key }}"
+    when:
+      - item.value.aggr_raid_attributes.state != "online"
+    loop:
+      "{{ lookup('dict', netapp.ontap_info.aggregate_info) }}"
+    loop_control:
+      label: "{{ item.key }}"
+#    ignore_errors: yes
+
+  - name: Fail on non-compliant aggregate names
+    ansible.builtin.fail:
+      msg: "check failed on {{ item.key }}"
+    when:
+      - item.value.aggr_raid_attributes.is_root_aggregate == "true"
+      - not item.key | regex_search('^aggr0_{{ item.value.aggr_ownership_attributes.cluster }}_.*$')
+    loop:
+      "{{ lookup('dict', netapp.ontap_info.aggregate_info) }}"
+    loop_control:
+      label: "{{ item.key }}"
+#    ignore_errors: yes
+
+#  - name: Print cluster details
+#    ansible.builtin.debug:
+#      msg: "{{ item.key }}"
+#    loop:
+#      "{{ lookup('dict', netapp.ontap_info.subsys_health_info)}}"
