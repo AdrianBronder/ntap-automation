@@ -29,7 +29,7 @@ echo "--> Upgrading Asnible"
 pip3 install --upgrade ansible
 
 echo "--> Installing additional Python libs"
-pip3 install --upgrade netapp_lib
+pip3 install --upgrade requests six netapp_lib
 pip3 install "pywinrm[kerberos]>=0.3.0"
 
 echo "--> Creating links for Python3"
@@ -40,10 +40,10 @@ echo "--> Installing additional ansible collections (ONTAP, UM, Windows, AWX)"
 ansible-galaxy collection install netapp.ontap
 ansible-galaxy collection install netapp.um_info
 ansible-galaxy collection install community.windows
-ansible-galaxy collection install awx.awx
+ansible-galaxy collection install awx.awx:17.1.0
 
 echo "--> Installing libraries and collections in AWX container"
-docker exec -it awx_task pip3 install --upgrade netapp_lib
+docker exec -it awx_task pip3 install --upgrade requests six netapp_lib
 docker exec -it awx_task ansible-galaxy collection install netapp.ontap -p /usr/share/ansible/collections -f
 docker exec -it awx_task ansible-galaxy collection install netapp.um_info -p /usr/share/ansible/collections -f
 
