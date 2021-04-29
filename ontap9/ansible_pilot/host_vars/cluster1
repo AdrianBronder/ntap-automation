@@ -1,0 +1,51 @@
+name:                     "cluster1"
+dns_domains:
+  -                       "demo.netapp.com"
+name_servers:
+  -                       "192.168.0.253"
+timezone:
+  name:                   "Europe/Berlin"
+ntp_servers:
+  -
+nodes:
+  -
+svms:
+  pri_svm_01:
+    name:                 "pri_svm_01"
+    language:             "c.UTF-8"
+    comment:              "this is my pilot"
+    ipspace:
+      name:               "Default"
+    dns:
+      domains:
+        -                 "demo.netapp.com"
+      servers:
+        -                 "192.168.0.253"
+    nfs:
+      enabled:            true
+    cifs:
+      name:               "PRI_SVM_01"
+      enabled:            true
+      ad_domain:
+        fqdn:             "demo.netapp.com"
+    snapshot_policy:
+      name:               "none"
+    lifs:
+      pri_svm_01_mgmt01:
+        name:             "pri_svm_01_mgmt01"
+        svm:
+          name:           "pri_svm_01"
+        ip:
+          address:        "192.168.0.200"
+          netmask:        "255.255.255.0"
+          family:         "ipv4"
+        service_policy:
+          name:           "default-management"
+        location:
+          home_node:
+            name:         "cluster1-01"
+          home_port:
+            name:         "e0c"
+          failover:       "broadcast_domain_only"
+          auto_revert:    true
+    volumes:

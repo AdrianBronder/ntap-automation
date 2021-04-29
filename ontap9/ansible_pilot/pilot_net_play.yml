@@ -1,0 +1,29 @@
+---
+- hosts:         cluster1
+  gather_facts:  false
+  collections:
+    - netapp.ontap
+
+  tasks:
+  - name: Set Connection Details
+    ansible.builtin.set_fact:
+      ontap_login: &ontap_login
+        hostname:                   "{{ ontap_hostname }}"
+        username:                   "{{ ontap_username }}"
+        password:                   "{{ ontap_password }}"
+        https:                      true
+        validate_certs:             false 
+ 
+  - name: Create Management LIF static
+    connection: local
+    na_ontap_interface:
+      use_rest: "never"
+      interface_name:               "{{ svms[svm_name].lifs['pri_svm_01_mgmt01'].name }}"
+      vserver:                      "{{ svms[svm_name].lifs['pri_svm_01_mgmt01'].svm.name }}"
+      address:                      "{{ svms[svm_name].lifs['pri_svm_01_mgmt01'].ip.address }}"
+      netmask:                      "{{ svms[svm_name].lifs['pri_svm_01_mgmt01'].ip.netmask }}"
+      service_policy:               "{{ svms[svm_name].lifs['pri_svm_01_mgmt01'].service_policy.name }}"
+      home_node:                    "{{ svms[svm_name].lifs['pri_svm_01_mgmt01'].location.home_node.name }}"
+      home_port:                    "{{ svms[svm_name].lifs['pri_svm_01_mgmt01'].location.home_port.name }}"
+      role: "data"
+      <<: *ontap_login

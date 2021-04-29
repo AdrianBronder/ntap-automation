@@ -1,0 +1,58 @@
+---
+# tasks file for ontap_svm
+
+- name: Set Connection Details
+  ansible.builtin.set_fact:
+    ontap_login: &ontap_login
+      hostname:                   "{{ ontap_hostname }}"
+      username:                   "{{ ontap_username }}"
+      password:                   "{{ ontap_password }}"
+      https:                      true
+      validate_certs:             false
+      use_rest:                   never
+
+- name: Create SVM
+  na_ontap_svm:
+    state:                        present
+    name:                         "{{ svm_name }}"
+    language:                     "{{ svms[svm_name].language }}"
+    comment:                      "{{ svms[svm_name].comment }}"
+    ipspace:                      "{{ svms[svm_name].ipspace.name }}"
+    snapshot_policy:              "{{ svms[svm_name].snapshot_policy.name }}"
+    <<: *ontap_login
+  tags:
+  - create_ontap_svm
+  - modify_ontap_svm
+
+- name: debug
+  debug:
+    msg: "{{ svms[svm_name].lifs[item] }}"
+  loop:
+    "{{ svms[svm_name].lifs | list }}"
+
+- name: Create LIFs
+  na_ontap_interface:
+    state:                        present
+    interface_name:               "{{ svms[svm_name].lifs[item].name }}"
+    vserver:                      "{{ svms[svm_name].lifs[item].svm.name }}"
+    address:                      "{{ svms[svm_name].lifs[item].ip.address }}"
+    netmask:                      "{{ svms[svm_name].lifs[item].ip.netmask }}"
+    service_policy:               "{{ svms[svm_name].lifs[item].service_policy.name }}"
+    home_node:                    "{{ svms[svm_name].lifs[item].location.home_node.name }}"
+    home_port:                    "{{ svms[svm_name].lifs[item].location.home_port.name }}"
+    <<: *ontap_login
+  loop:
+    "{{ svms[svm_name].lifs | list }}"
+  tags:
+  - create_ontap_svm
+
+- name: Configure DNS
+  na_ontap_dns:
+    state:                        present
+    vserver:                      "{{ svm_name }}"
+    domains:                      "{{ svms[svm_name].dns.domains }}"
+    nameservers:                  "{{ svms[svm_name].dns.servers }}"
+    <<: *ontap_login
+  tags:
+  - create_ontap_svm
+  - modify_ontap_svm
