@@ -10,6 +10,8 @@
       https:                      true
       validate_certs:             false
       use_rest:                   never
+  tags:
+    - always
 
 - name: Create SVM
   na_ontap_svm:
@@ -21,14 +23,8 @@
     snapshot_policy:              "{{ svms[svm_name].snapshot_policy.name }}"
     <<: *ontap_login
   tags:
-  - create_ontap_svm
-  - modify_ontap_svm
-
-- name: debug
-  debug:
-    msg: "{{ svms[svm_name].lifs[item] }}"
-  loop:
-    "{{ svms[svm_name].lifs | list }}"
+    - create_ontap_svm
+    - modify_ontap_svm
 
 - name: Create LIFs
   na_ontap_interface:
@@ -40,11 +36,13 @@
     service_policy:               "{{ svms[svm_name].lifs[item].service_policy.name }}"
     home_node:                    "{{ svms[svm_name].lifs[item].location.home_node.name }}"
     home_port:                    "{{ svms[svm_name].lifs[item].location.home_port.name }}"
+# FIXME - This one is ugly, but "role" must be provided as long as we have to use ZAPI here
+    role:                         "data"
     <<: *ontap_login
   loop:
     "{{ svms[svm_name].lifs | list }}"
   tags:
-  - create_ontap_svm
+    - create_ontap_svm
 
 - name: Configure DNS
   na_ontap_dns:
@@ -54,5 +52,13 @@
     nameservers:                  "{{ svms[svm_name].dns.servers }}"
     <<: *ontap_login
   tags:
-  - create_ontap_svm
-  - modify_ontap_svm
+    - create_ontap_svm
+    - modify_ontap_svm
+
+- name: Delete SVM
+  na_ontap_svm:
+    state:                        absent
+    name:                         "{{ svm_name }}"
+    <<: *ontap_login
+  tags:
+    - delete_ontap_svm

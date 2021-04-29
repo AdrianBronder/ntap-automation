@@ -1,7 +1,6 @@
 ---
-- hosts: cluster1
-  connection: local
+- hosts:        cluster1
   gather_facts: false
+
   roles:
-    - role: ontap_svm
-      tags: create_ontap_svm
+  - role: ontap_svm

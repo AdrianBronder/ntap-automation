@@ -3,5 +3,5 @@ cluster1 ontap_hostname=cluster1.demo.netapp.com
 cluster2 ontap_hostname=cluster2.demo.netapp.com
 
 [ontap:vars]
-connection=local
+ansible_connection=local
 ansible_python_interpreter="{{ansible_playbook_python}}"
