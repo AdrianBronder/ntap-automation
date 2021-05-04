@@ -1,2 +1,91 @@
 ---
 # defaults file for ontap_svm
+dns:
+  domains: []
+  servers: []
+nfs:
+  enabled:
+ip_interfaces:
+- location:
+    home_node:
+      name:
+      uuid:
+    broadcast_domain:
+      name:
+      uuid:
+  ip:
+    netmask:
+    address:
+  name:
+  service_policy:
+cifs:
+  name:
+  ad_domain:
+    organizational_unit:
+    fqdn:
+    password:
+    user:
+  enabled:
+fc_interfaces:
+- data_protocol:
+  location:
+    port:
+      name:
+      uuid:
+      node:
+        name:
+  name:
+subtype:
+routes:
+- gateway:
+  destination:
+    netmask:
+    address:
+nis:
+  domain:
+  servers: []
+  enabled:
+snapshot_policy:
+  name:
+  uuid:
+ipspace:
+  name:
+  uuid:
+s3:
+  is_http_enabled:
+  certificate:
+    name:
+    uuid:
+  name:
+  port:
+  secure_port:
+  enabled:
+  is_https_enabled:
+iscsi:
+  enabled:
+language: "de.utf_8"
+aggregates:
+- name:
+  uuid:
+fcp:
+  enabled:
+ldap:
+  base_dn:
+  servers: []
+  bind_dn:
+  ad_domain:
+  enabled:
+name:
+nvme:
+  enabled:
+nsswitch:
+  passwd: []
+  hosts: []
+  netgroup: []
+  group: []
+  namemap: []
+comment:
+volume_efficiency_policy:
+  name:
+  uuid:
+snapmirror: {}

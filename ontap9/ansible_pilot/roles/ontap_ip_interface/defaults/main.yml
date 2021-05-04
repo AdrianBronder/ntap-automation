@@ -1,0 +1,32 @@
+---
+# defaults file for ontap_ip_interface
+location:
+  auto_revert:
+  home_node:
+    name:
+    uuid:
+  failover:
+  home_port:
+    name:
+    uuid:
+    node:
+      name:
+  broadcast_domain:
+    name:
+    uuid:
+ip:
+  netmask:
+  address:
+name:
+ipspace:
+  name:
+  uuid:
+vip:
+svm:
+  name:
+  uuid:
+service_policy:
+  name:
+  uuid:
+enabled:
+scope:

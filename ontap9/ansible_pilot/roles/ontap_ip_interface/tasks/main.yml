@@ -1,0 +1,63 @@
+---
+# tasks file for ontap_ip_interface
+- name: Set Connection Details
+  ansible.builtin.set_fact:
+    ontap_login: &ontap_login
+      hostname:                   "{{ ontap_hostname }}"
+      username:                   "{{ ontap_username }}"
+      password:                   "{{ ontap_password }}"
+      https:                      true
+      validate_certs:             false
+      use_rest:                   never
+  tags:
+    - always
+  no_log: true
+
+- name: Source Inventory Information
+  block:
+    - name: Find SVM
+      ansible.builtin.set_fact:
+        svm: "{{ item }}"
+      loop:
+        "{{ svms | list}}"
+      when:
+        - item.name == svm_name
+    - name: Find IP Interface
+      ansible.builtin.set_fact:
+        ip_interface: "{{ item }}"
+      loop:
+        "{{ svm.ip_interfaces | list}}"
+      when:
+        - item.name == ip_interface_name
+    - name: Include HostVars
+      ansible.builtin.set_fact:
+        "{{ item }}": "{{ ip_interface[item] }}"
+      loop:
+        "{{ ip_interface | list }}"
+      when:
+        - ip_interface[item]
+  tags:
+    - "source_inventory"
+
+- name: Create LIFs
+  na_ontap_interface:
+    state:                        present
+    interface_name:               "{{ name }}"
+    vserver:                      "{{ svm_name }}"
+    address:                      "{{ ip.address }}"
+    netmask:                      "{{ ip.netmask }}"
+    service_policy:               "{{ service_policy.name }}"
+    home_node:                    "{{ location.home_node.name }}"
+    home_port:                    "{{ location.home_port.name }}"
+    <<: *ontap_login
+  tags:
+    - "create_ontap_ip_interface"
+
+- name: Delete LIF
+  na_ontap_interface:
+    state:                        absent
+    interface_name:               "{{ ip_interface_name }}"
+    vserver:                      "{{ svm_name }}"
+    <<: *ontap_login
+  tags:
+    - "delete_ontap_ip_interface"

@@ -1,0 +1,6 @@
+---
+- hosts:        cluster1
+  gather_facts: false
+
+  roles:
+  - role: ontap_ip_interface
