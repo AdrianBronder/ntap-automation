@@ -16,13 +16,14 @@
 #
 ################################################################################
 
-- hosts: localhost
-  gather_facts: false
+- hosts:              localhost
+  gather_facts:       false
   vars:
     input: &input
-      tower_host:     "http://rhel1.demo.netapp.com"
+      tower_host:     "http://ansible.demo.netapp.com"
       tower_username: "admin"
       tower_password: "Netapp1!"
+      validate_certs: "no"
   collections:
     - awx.awx
 
@@ -43,6 +44,38 @@
       scm_url:                   "https://github.com/AdrianBronder/ntap-automation"
       scm_update_on_launch:      True
       scm_update_cache_timeout:  60
+      <<: *input
+
+  - name: Create Custom Credential Type for ONTAP
+    tower_credential_type:
+      state:                     present
+      name:                      "ONTAP Cluster"
+      description:               "Default credential type for connecting to ONTAP clusters"
+      kind:                      "cloud"
+      inputs:
+        fields:
+          - id:                  "ontap_username"
+            type:                "string"
+            label:               "Username"
+          - id:                  "ontap_password"
+            type:                "string"
+            label:               "Password"
+            secret:              True
+      injectors:
+        extra_vars:
+          ontap_username:        "{{ '{{ ontap_username }}' }}"
+          ontap_password:        "{{ '{{ ontap_password }}' }}"
+      <<: *input
+
+  - name: Create ONTAP default credential
+    tower_credential:
+      state:                     present
+      name:                      "ONTAP Default Credentials"
+      credential_type:           "ONTAP Cluster"
+      organization:              "NetApp LoD"
+      inputs:
+        ontap_username:          "admin"
+        ontap_password:          "Netapp1!"
       <<: *input
 
   - name: Configure AD authentication in AWX

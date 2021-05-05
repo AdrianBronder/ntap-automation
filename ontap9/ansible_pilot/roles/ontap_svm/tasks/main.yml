@@ -16,11 +16,14 @@
 
 - name: Source Inventory Information
   block:
+    - name: Print SVMs
+      ansible.builtin.debug:
+        msg: "{{ smvs }}"
     - name: Find SVM
       ansible.builtin.set_fact:
         svm: "{{ item }}"
       loop:
-        "{{ svms | list}}"
+        "{{ svms | list }}"
       when:
         - item.name == svm_name
     - name: Include HostVars

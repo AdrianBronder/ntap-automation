@@ -2,5 +2,22 @@
 - hosts:        cluster1
   gather_facts: false
 
+#  pre_tasks:
+#    - name: Find SVM
+#      ansible.builtin.set_fact:
+#        svm: "{{ item }}"
+#      loop:
+#        "{{ svms | list}}"
+#      when:
+#        - item.name == svm_name
+#    - name: Include HostVars
+#      ansible.builtin.set_fact:
+#        "{{ item }}": "{{ svm[item] }}"
+#      loop:
+#        "{{ svm | list }}"
+#    - name: Print something
+#      ansible.builtin.debug:
+#        msg: "{{ name }}"
+
   roles:
   - role: ontap_svm
