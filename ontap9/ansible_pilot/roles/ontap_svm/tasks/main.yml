@@ -18,7 +18,7 @@
   block:
     - name: Print SVMs
       ansible.builtin.debug:
-        msg: "{{ smvs }}"
+        msg: "{{ svms }}"
     - name: Find SVM
       ansible.builtin.set_fact:
         svm: "{{ item }}"
