@@ -84,4 +84,5 @@
     name:                         "{{ svm_name }}"
     <<: *ontap_login
   tags:
+    - never
     - delete_ontap_svm
