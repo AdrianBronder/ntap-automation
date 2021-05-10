@@ -59,12 +59,12 @@ cd ~
 echo "--> Upgrading pip"
 sudo pip3 install --upgrade pip
 
-echo "--> Installing Asnible"
-pip3 install ansible
-
 echo "--> Installing additional Python libs"
-pip3 install --upgrade requests six netapp_lib docker docker-compose selinux
-pip3 install --upgrade "pywinrm[kerberos]>=0.3.0"
+sudo pip3 install --upgrade requests six netapp_lib docker docker-compose selinux
+sudo pip3 install --upgrade "pywinrm[kerberos]>=0.3.0"
+
+echo "--> Installing Asnible"
+sudo pip3 install --user ansible
 
 echo "--> Installing additional ansible collections (ONTAP, UM, Windows, AWX)"
 ansible-galaxy collection install netapp.ontap
