@@ -23,8 +23,8 @@ echo "--> Updating Red Hat system"
 sudo yum -y update
 
 echo "--> Remove AWX"
-docker stop awx_task awx_web awx_rabbitmq awx_memcached awx_postgres
-docker rm awx_task awx_web awx_rabbitmq awx_memcached awx_postgres
+docker stop -f awx_task awx_web awx_rabbitmq awx_memcached awx_postgres
+docker rm -f awx_task awx_web awx_rabbitmq awx_memcached awx_postgres
 docker image rm ansible/awx_task:9.1.1 ansible/awx_web:9.1.1 postgres:10 ansible/awx_rabbitmq:3.7.4
 docker volume prune -f
 rm -rf ~/awx ~/.awx
@@ -46,8 +46,8 @@ echo "--> Installing additional packages"
 sudo yum install -y wget gcc libffi-devel epel-release zlib-devel openssl-devel jq libxml2 git docker-ce docker-ce-cli containerd.io nodejs
 
 echo "--> Install Python3"
-mkdir /tmp/download-python
-wget -P /tmp/download-python https://www.python.org/ftp/python/3.9.1/Python-3.9.1.tgz
+sudo mkdir /tmp/download-python
+sudo wget -P /tmp/download-python https://www.python.org/ftp/python/3.9.1/Python-3.9.1.tgz
 sudo tar xf /tmp/download-python/Python-3.9.1.tgz -C /opt/
 cd /opt/Python-3.9.1
 sudo ./configure --enable-optimizations
