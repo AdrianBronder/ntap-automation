@@ -9,14 +9,14 @@ If you are a customer, partner or NetApp employee:
    - Customer:       https://handsonlabs.netapp.com/lab/ontapapi
    - NetApp/Partner: https://labondemand.netapp.com/lab/sl10599
    
-2. Log into the first Linux machine (rhel1) and clone this repository:
+2. Log into the Ansible Linux host ("ansible.demo.netapp.com") and clone this repository:
    ```
    # git clone https://github.com/AdrianBronder/ntap-automation.git
    ```
    
 3. Initialize the environment by running the lab init script:
    ```
-   # ./ntap-automation/ntaplod_init/ontapapi_sl10599_init.sh
+   # sudo ./ntap-automation/ntaplod_init/ontapapi_sl10599_init.sh
    ```
    
 4. Execute scripts from subfolders depending on type of solution, method and task, e.g.: ontap9 --> python --> create SVM

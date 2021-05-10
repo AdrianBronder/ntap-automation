@@ -5,42 +5,80 @@
 # Title:        ontapapi_sl10599_init.sh
 # Author:       Adrian Bronder
 # Date:         2020-09-03
-# Description:  Prepare linux host "rhel1" in LoD lab sl10599
-#               --> "Exploring the ONTAP REST API v1.2"
+# Description:  Prepare linux host "ansible" in LoD lab sl10599
+#               --> "Exploring the ONTAP REST API v1.3"
 #
 # URLs:         https://labondemand.netapp.com/lab/sl10599 (NetApp + Partner)
 #               https://handsonlabs.netapp.com/lab/ontapapi (Customer)
 #               http://docs.netapp.com/ontap-9/index.jsp
 #               https://pypi.org/project/netapp-ontap/
-#               https://galaxy.ansible.com/netapp/ontap
+#               https://galaxy.ansible.com/netapp/ontapa
+#
+# Change Log:   - 2021-05-10: Lab update to v1.3
+#                 Multiple changes required to prep environment (on "ansible")
 #
 ################################################################################
 
 echo "--> Updating Red Hat system"
-yum -y update
+sudo um -y update
+
+echo "--> Remove AWX"
+docker stop awx_task awx_web awx_rabbitmq awx_memcached awx_postgres
+docker rm awx_task awx_web awx_rabbitmq awx_memcached awx_postgres
+docker image rm ansible/awx_task:9.1.1 ansible/awx_web:9.1.1 postgres:10 ansible/awx_rabbitmq:3.7.4
+docker volume prune -f
+sudo rm -rf ~/awx ~/.awx
+
+echo "--> Remove Ansible"
+pip3 uninstall -y ansible
+rm -rf ~/.ansible
+
+echo "--> Remove Python3"
+yum remove -y python3
+sudo rm -f /usr/bin/python3
+sudo rm -f /usr/bin/pip3
+
+echo "--> Add repositories"
+sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+curl -sL https://rpm.nodesource.com/setup_14.x | sudo bash -
 
 echo "--> Installing additional packages"
-yum -y install jq
+sudo yum install -y wget gcc libffi-devel epel-release zlib-devel openssl-devel jq libxml2 git docker-ce docker-ce-cli containerd.io nodejs
+
+echo "--> Install Python3"
+wget -P ~/download-python https://www.python.org/ftp/python/3.9.1/Python-3.9.1.tgz
+sudo tar xf ~/download-python/Python-3.9.1.tgz -C /opt/
+cd /opt/Python-3.9.1
+sudo ./configure --enable-optimizations
+sudo make altinstall
+sudo ln -s /usr/local/bin/python3.9 /usr/bin/python3
+sudo ln -s /usr/local/bin/pip3.9 /usr/bin/pip3
+cd ~
 
 echo "--> Upgrading pip"
-pip3 install --upgrade pip
+sudo pip3 install --upgrade pip
 
-echo "--> Upgrading Asnible"
-pip3 install --upgrade ansible
+echo "--> Installing Asnible"
+pip3 install ansible
 
 echo "--> Installing additional Python libs"
-pip3 install --upgrade requests six netapp_lib
-pip3 install "pywinrm[kerberos]>=0.3.0"
-
-echo "--> Creating links for Python3"
-ln -s /usr/local/bin/python3.8 /usr/bin/python3
-ln -s /usr/local/bin/pip3.8 /usr/bin/pip3
+pip3 install --upgrade requests six netapp_lib docker docker-compose selinux
+pip3 install --upgrade "pywinrm[kerberos]>=0.3.0"
 
 echo "--> Installing additional ansible collections (ONTAP, UM, Windows, AWX)"
 ansible-galaxy collection install netapp.ontap
 ansible-galaxy collection install netapp.um_info
 ansible-galaxy collection install community.windows
 ansible-galaxy collection install awx.awx:17.1.0
+
+echo "--> Install docker images"
+cat ~/ntap-automation/ntaplod_init/docker_images/awx_17_lod_db_images.tar.gz.* > ~/ntap-automation/ntaplod_init/docker_images/awx_17_lod_db_images.tar.gz
+docker load < ~/ntap-automation/ntaplod_init/docker_images/awx_17_lod_db_images.tar.gz
+
+echo "--> Installing AWX"
+git clone -b 17.1.0 https://github.com/ansible/awx
+sed -i 's/^\# admin_password=password$/admin_password=Netapp1!/' ~/awx/installer/inventory
+ansible-playbook -i awx/installer/inventory awx/installer/install.yml
 
 echo "--> Installing libraries and collections in AWX container"
 docker exec -it awx_task pip3 install --upgrade requests six netapp_lib
@@ -57,33 +95,3 @@ echo "--> Configuring AWX (rhel1)"
 $(dirname $0)/ontapapi_sl10599_init_helper/sl10599_init_awx.yml
 
 
-
-### REMOVED FROM 1.1 to 1.2 (already installed in LoD or not relevant anymore):
-: '
-echo "--> Installing additional packages"
-yum -y install epel-release zlib-devel openssl-devel jq
-
-echo "--> Installing Python 3.8.2 (as alternative version)"
-wget -P /opt/ https://www.python.org/ftp/python/3.8.2/Python-3.8.2.tgz
-tar xf /opt/Python-3.8.2.tgz -C /opt/
-cd /opt/Python-3.8.2
-./configure --enable-optimizations
-make altinstall
-ln -s /usr/local/bin/python3.8 /usr/bin/python3
-ln -s /usr/local/bin/pip3.8 /usr/bin/pip3
-cd ~
-
-echo "--> Upgrading Python pip (for both versions)"
-pip install --upgrade pip
-pip3 install --upgrade pip
-
-echo "--> Installing ONTAP Python client libraries and dependencies"
-pip install requests marshmallow
-pip install netapp-lib
-pip3 install requests marshmallow
-pip3 install netapp-lib
-pip3 install netapp-ontap
-
-echo "--> Installing Ansible"
-yum -y install ansible
-'
