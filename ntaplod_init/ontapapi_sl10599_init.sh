@@ -20,70 +20,71 @@
 ################################################################################
 
 echo "--> Updating Red Hat system"
-sudo um -y update
+yum -y update
 
 echo "--> Remove AWX"
 docker stop awx_task awx_web awx_rabbitmq awx_memcached awx_postgres
 docker rm awx_task awx_web awx_rabbitmq awx_memcached awx_postgres
 docker image rm ansible/awx_task:9.1.1 ansible/awx_web:9.1.1 postgres:10 ansible/awx_rabbitmq:3.7.4
 docker volume prune -f
-sudo rm -rf ~/awx ~/.awx
+rm -rf ~/awx ~/.awx
 
 echo "--> Remove Ansible"
-pip3 uninstall -y ansible
-rm -rf ~/.ansible
+sudo -u ansible pip3 uninstall -y ansible
+sudo -u ansible rm -rf ~/.ansible
 
 echo "--> Remove Python3"
 yum remove -y python3
-sudo rm -f /usr/bin/python3
-sudo rm -f /usr/bin/pip3
+rm -f /usr/bin/python3
+rm -f /usr/bin/pip3
 
 echo "--> Add repositories"
-sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 curl -sL https://rpm.nodesource.com/setup_14.x | sudo bash -
 
 echo "--> Installing additional packages"
-sudo yum install -y wget gcc libffi-devel epel-release zlib-devel openssl-devel jq libxml2 git docker-ce docker-ce-cli containerd.io nodejs
+yum install -y wget gcc libffi-devel epel-release zlib-devel openssl-devel jq libxml2 git docker-ce docker-ce-cli containerd.io nodejs
 
 echo "--> Install Python3"
-wget -P ~/download-python https://www.python.org/ftp/python/3.9.1/Python-3.9.1.tgz
-sudo tar xf ~/download-python/Python-3.9.1.tgz -C /opt/
+mkdir /tmp/download-python
+wget -P /tmp/download-python https://www.python.org/ftp/python/3.9.1/Python-3.9.1.tgz
+tar xf /tmp/download-python/Python-3.9.1.tgz -C /opt/
 cd /opt/Python-3.9.1
-sudo ./configure --enable-optimizations
-sudo make altinstall
-sudo ln -s /usr/local/bin/python3.9 /usr/bin/python3
-sudo ln -s /usr/local/bin/pip3.9 /usr/bin/pip3
-cd ~
+./configure --enable-optimizations
+make altinstall
+ln -s /usr/local/bin/python3.9 /usr/bin/python3
+ln -s /usr/local/bin/pip3.9 /usr/bin/pip3
+sudo -u ansible cd ~
 
 echo "--> Upgrading pip"
-sudo pip3 install --upgrade pip
+pip3 install --upgrade pip
 
 echo "--> Installing Asnible"
-pip3 install ansible
+sudo -u ansible pip3 install ansible
 
 echo "--> Installing additional Python libs"
-pip3 install --upgrade requests six netapp_lib docker docker-compose selinux
-pip3 install --upgrade "pywinrm[kerberos]>=0.3.0"
+sudo -u ansible pip3 install --upgrade requests six netapp_lib docker docker-compose selinux
+sudo -u ansible pip3 install --upgrade "pywinrm[kerberos]>=0.3.0"
 
 echo "--> Installing additional ansible collections (ONTAP, UM, Windows, AWX)"
-ansible-galaxy collection install netapp.ontap
-ansible-galaxy collection install netapp.um_info
-ansible-galaxy collection install community.windows
-ansible-galaxy collection install awx.awx:17.1.0
+sudo -u ansible ansible-galaxy collection install netapp.ontap
+sudo -u ansible ansible-galaxy collection install netapp.um_info
+sudo -u ansible ansible-galaxy collection install community.windows
+sudo -u ansible ansible-galaxy collection install awx.awx:17.1.0
 
 echo "--> Install docker images"
-cat ~/ntap-automation/ntaplod_init/docker_images/awx_17_lod_db_images.tar.gz.* > ~/ntap-automation/ntaplod_init/docker_images/awx_17_lod_db_images.tar.gz
-docker load < ~/ntap-automation/ntaplod_init/docker_images/awx_17_lod_db_images.tar.gz
+sudo -u ansible cat ~/ntap-automation/ntaplod_init/docker_images/awx_17_lod_db_images.tar.gz.* > ~/ntap-automation/ntaplod_init/docker_images/awx_17_lod_db_images.tar.gz
+sudo -u ansible docker load < ~/ntap-automation/ntaplod_init/docker_images/awx_17_lod_db_images.tar.gz
 
 echo "--> Installing AWX"
-git clone -b 17.1.0 https://github.com/ansible/awx
-sed -i 's/^\# admin_password=password$/admin_password=Netapp1!/' ~/awx/installer/inventory
-ansible-playbook -i awx/installer/inventory awx/installer/install.yml
+sudo -u ansible git clone -b 17.1.0 https://github.com/ansible/awx
+sudo -u ansible sed -i 's/^\# admin_password=password$/admin_password=Netapp1!/' ~/awx/installer/inventory
+sudo -u ansible ansible-playbook -i awx/installer/inventory awx/installer/install.yml
 
 echo "--> Installing libraries and collections in AWX container"
-docker exec -it awx_task pip3 install --upgrade requests six netapp_lib
-docker exec -it awx_task ansible-galaxy collection install netapp.ontap -p /usr/share/ansible/collections -f
-docker exec -it awx_task ansible-galaxy collection install netapp.um_info -p /usr/share/ansible/collections -f
+sudo -u ansible docker exec -it awx_task pip3 install --upgrade requests six netapp_lib
+sudo -u ansible docker exec -it awx_task ansible-galaxy collection install netapp.ontap -p /usr/share/ansible/collections -f
+sudo -u ansible docker exec -it awx_task ansible-galaxy collection install netapp.um_info -p /usr/share/ansible/collections -f
 
 echo "--> Creating aggrgates on primary cluster (cluster 1)"
 $(dirname $0)/ontapapi_sl10599_init_helper/sl10599_init_cluster.sh
@@ -91,7 +92,7 @@ $(dirname $0)/ontapapi_sl10599_init_helper/sl10599_init_cluster.sh
 echo "--> Creating Users and groups in AD (dc1)"
 $(dirname $0)/ontapapi_sl10599_init_helper/sl10599_init_ad.yml -i $(dirname $0)/ontapapi_sl10599_init_helper/init_inventory
 
-echo "--> Configuring AWX (rhel1)"
+echo "--> Configuring AWX (demo.netapp.com)"
 $(dirname $0)/ontapapi_sl10599_init_helper/sl10599_init_awx.yml
 
 
