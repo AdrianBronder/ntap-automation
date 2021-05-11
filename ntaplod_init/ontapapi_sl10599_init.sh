@@ -19,15 +19,15 @@
 #
 ################################################################################
 
-echo "--> Updating Red Hat system"
+#echo "--> Updating Red Hat system"
 # sudo yum -y update
 
 echo "--> Remove AWX"
-docker stop -f awx_task awx_web awx_rabbitmq awx_memcached awx_postgres
-docker stop -f awx_web
-docker stop -f awx_postgres
-docker stop -f awx_memcached
-docker stop -f awx_rabbitmq
+docker stop awx_task
+docker stop awx_web
+docker stop awx_postgres
+docker stop awx_memcached
+docker stop awx_rabbitmq
 docker rm -f awx_task
 docker rm -f awx_web
 docker rm -f awx_postgres
@@ -35,7 +35,7 @@ docker rm -f awx_memcached
 docker rm -f awx_rabbitmq
 docker volume prune -f
 rm -rf ~/awx
-rm -rf ~/.awx/pgdocker
+sudo rm -rf ~/.awx/pgdocker/*
 
 echo "--> Remove Ansible"
 pip3 uninstall -y ansible
