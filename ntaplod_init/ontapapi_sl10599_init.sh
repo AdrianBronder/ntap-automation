@@ -20,14 +20,22 @@
 ################################################################################
 
 echo "--> Updating Red Hat system"
-sudo yum -y update
+# sudo yum -y update
 
 echo "--> Remove AWX"
 docker stop -f awx_task awx_web awx_rabbitmq awx_memcached awx_postgres
-docker rm -f awx_task awx_web awx_rabbitmq awx_memcached awx_postgres
-docker image rm ansible/awx_task:9.1.1 ansible/awx_web:9.1.1 postgres:10 ansible/awx_rabbitmq:3.7.4
+docker stop -f awx_web
+docker stop -f awx_postgres
+docker stop -f awx_memcached
+docker stop -f awx_rabbitmq
+docker rm -f awx_task
+docker rm -f awx_web
+docker rm -f awx_postgres
+docker rm -f awx_memcached
+docker rm -f awx_rabbitmq
 docker volume prune -f
-rm -rf ~/awx ~/.awx
+rm -rf ~/awx
+rm -rf ~/.awx/pgdocker
 
 echo "--> Remove Ansible"
 pip3 uninstall -y ansible
@@ -37,6 +45,8 @@ echo "--> Remove Python3"
 sudo yum remove -y python3
 sudo rm -f /usr/bin/python3
 sudo rm -f /usr/bin/pip3
+sudo rm -rf /usr/local/lib
+rm -rf ~/.local/*
 
 echo "--> Add repositories"
 sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
@@ -48,7 +58,7 @@ sudo yum install -y wget gcc libffi-devel epel-release zlib-devel openssl-devel 
 echo "--> Install Python3"
 sudo mkdir /tmp/download-python
 sudo wget -P /tmp/download-python https://www.python.org/ftp/python/3.9.1/Python-3.9.1.tgz
-sudo tar xf /tmp/download-python/Python-3.9.1.tgz -C /opt/
+sudo tar xfo /tmp/download-python/Python-3.9.1.tgz -C /opt/
 cd /opt/Python-3.9.1
 sudo ./configure --enable-optimizations
 sudo make altinstall
@@ -64,7 +74,7 @@ sudo pip3 install --upgrade requests six netapp_lib docker docker-compose selinu
 sudo pip3 install --upgrade "pywinrm[kerberos]>=0.3.0"
 
 echo "--> Installing Asnible"
-sudo pip3 install --user ansible
+pip3 install ansible --user ansible
 
 echo "--> Installing additional ansible collections (ONTAP, UM, Windows, AWX)"
 ansible-galaxy collection install netapp.ontap
