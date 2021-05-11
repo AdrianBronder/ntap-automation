@@ -4,7 +4,7 @@ svms:
     ipspace:
       name:                   "Default"
       uuid:
-    language:                 "c.UTF-8"
+#    language:
     aggregates:
       - name:
         uuid:

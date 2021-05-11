@@ -16,7 +16,7 @@
       password:                   "{{ ontap_password }}"
       https:                      true
       validate_certs:             false
-      use_rest:                   never
+      use_rest:                   Never
   tags:
     - always
   no_log: true
@@ -25,7 +25,7 @@
   block:
     - name: Find SVM
       ansible.builtin.set_fact:
-        ontap_svm_obj: "{{ item }}"
+        ontap_svm_obj: "{{ ontap_svm_obj | combine(item, recursive=True) }}"
       loop:
         "{{ svms | list }}"
       when:

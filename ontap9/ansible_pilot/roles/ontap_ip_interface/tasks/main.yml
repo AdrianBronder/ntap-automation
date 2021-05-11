@@ -20,7 +20,7 @@
       password:                   "{{ ontap_password }}"
       https:                      true
       validate_certs:             false
-      use_rest:                   never
+      use_rest:                   Never
   tags:
     - always
   no_log: true
