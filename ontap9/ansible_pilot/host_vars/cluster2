@@ -1,51 +1,112 @@
-name:                     "cluster2"
-dns_domains:
-  -                       "demo.netapp.com"
-name_servers:
-  -                       "192.168.0.253"
-timezone:
-  name:                   "Europe/Berlin"
-ntp_servers:
-  -
-nodes:
-  -
 svms:
-  pri_svm_01:
-    name:                 "sec_svm_01"
-    language:             "c.UTF-8"
-    comment:              "this is my pilot"
+  - name:                     "sec_svm_01"
+    comment:                  "SVM config from host_vars"
     ipspace:
-      name:               "Default"
+      name:                   "Default"
+      uuid:
+    language:                 "c.UTF-8"
+    aggregates:
+      - name:
+        uuid:
     dns:
       domains:
-        -                 "demo.netapp.com"
+        -                     "demo.netapp.com"
       servers:
-        -                 "192.168.0.253"
+        -                     "192.168.0.253"
     nfs:
-      enabled:            true
+      enabled:                true
     cifs:
-      name:               "SEC_SVM_01"
-      enabled:            true
-      ad_domain:
-        fqdn:             "demo.netapp.com"
-    snapshot_policy:
-      name:               "none"
-    lifs:
-      pri_svm_01_mgmt01:
-        name:             "sec_svm_01_mgmt01"
-        svm:
-          name:           "sec_svm_01"
-        ip:
-          address:        "192.168.0.210"
-          netmask:        "255.255.255.0"
-          family:         "ipv4"
-        service_policy:
-          name:           "default-management"
-        location:
+      name:                   "SEC_SVM_01"
+      ad_domain: 
+        organizational_unit:
+        fqdn:                 "demo.netapp.com"
+        password:
+        user:
+      enabled:                true
+    ip_interfaces:
+      - location:
+          auto_revert:        true
           home_node:
-            name:         "cluster2-01"
+            name:             "cluster2-01"
+            uuid:
+          failover:           "broadcast_domain_only"
           home_port:
-            name:         "e0c"
-          failover:       "broadcast_domain_only"
-          auto_revert:    true
+            name:             "e0c"
+            uuid:
+            node:
+              name:           "e0d"
+          broadcast_domain:
+            name:
+            uuid:
+        ip:
+          netmask:            "255.255.255.0"
+          address:            "192.168.0.220"
+        name:                 "sec_svm_01_mgmt01"
+        ipspace:
+          name:               "Default"
+          uuid:
+        vip:
+        svm:
+          name:
+          uuid:
+        service_policy:
+          name:               "default-management"
+          uuid:
+        enabled:              true
+        scope:
+    routes:
+      - gateway:              "192.168.0.1"
+        destination:
+          netmask:            "32"
+          address:            "0.0.0.0"
+    fc_interfaces:
+      - data_protocol:
+        location:
+          port:
+            name:
+            uuid:
+            node:
+              name:
+        name:
+    subtype:
+    nis:
+      domain:
+      servers: []
+      enabled:
+    snapshot_policy:
+      name:                  "none"
+      uuid:
+    s3:
+      is_http_enabled:
+      certificate:
+        name:
+        uuid:
+      name:
+      port:
+      secure_port:
+      enabled:
+      is_https_enabled:
+    iscsi:
+      enabled:
+    fcp:
+      enabled:
+    ldap:
+      base_dn:
+      servers: []
+      bind_dn:
+      ad_domain:
+      enabled:
+    nvme:
+      enabled:
+    nsswitch:
+      passwd: []
+      hosts: []
+      netgroup: []
+      group: []
+      namemap: []
+    volume_efficiency_policy:
+      name:
+      uuid:
+    snapmirror: {}
     volumes:
+      
