@@ -1,2 +1,141 @@
 ---
 # defaults file for ontap_volume
+name:
+uuid:
+type:
+size:
+snapshot_policy:
+  name:
+  uuid:
+svm:
+  name:
+  uuid:
+aggregates:
+  - name:
+    uuid:
+nas:
+  security_style:
+  uid:
+  path:
+  export_policy:
+    name:
+    id:
+  unix_permissions:
+  gid:
+cloud_retrieval_policy:
+files:
+  maximum:
+  used:
+qos:
+  policy:
+    max_throughput_iops:
+    max_throughput_mbps:
+    name:
+    min_throughput_iops:
+    min_throughput_mbps:
+    uuid:
+autosize:
+  minimum:
+  shrink_threshold:
+  maximum:
+  mode:
+  grow_threshold:
+clone:
+  parent_volume:
+    name:
+    uuid:
+  parent_snapshot:
+    name:
+    uuid:
+  split_estimate:
+  split_complete_percent:
+  split_initiated:
+  is_flexclone:
+  parent_svm:
+    name:
+    uuid:
+is_object_store:
+flexcache_endpoint_type:
+quota:
+  state:
+efficiency:
+  compression:
+  compaction:
+  dedupe:
+  policy:
+    name:
+  cross_volume_dedupe:
+  application_io_size:
+  schedule:
+create_time:
+access_time_enabled:
+queue_for_encryption:
+consistency_group:
+  name:
+snaplock:
+  autocommit_period:
+  expiry_time:
+  append_mode_enabled:
+  litigation_count:
+  unspecified_retention_file_count:
+  is_audit_log:
+  privileged_delete:
+  compliance_clock_time:
+  type:
+  retention:
+    minimum:
+    maximum:
+    default:
+language:
+movement:
+  percent_complete:
+  cutover_window:
+  destination_aggregate:
+    name:
+    uuid:
+  state:
+style:
+application:
+  name:
+  uuid:
+encryption:
+  rekey:
+  status:
+    message:
+    code:
+  key_id:
+  type:
+  state:
+  enabled:
+tiering:
+  object_tags:
+    - 
+  policy: 
+  min_cooling_days:
+space:
+  block_storage_inactive_user_data:
+  over_provisioned:
+  performance_tier_footprint:
+  footprint:
+  capacity_tier_footprint:
+  total_footprint:
+  size:
+  logical_space:
+    reporting:
+    enforcement:
+    used_by_afs:
+    available:
+  used:
+  snapshot:
+    used:
+    reserve_percent:
+  metadata:
+  available:
+  local_tier_footprint:
+comment:
+guarantee:
+  type:
+  honored:
+is_svm_root:
+snapmirror:
+  is_protected:

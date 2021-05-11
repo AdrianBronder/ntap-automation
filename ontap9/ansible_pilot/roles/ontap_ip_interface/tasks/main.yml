@@ -1,5 +1,17 @@
 ---
 # tasks file for ontap_ip_interface
+- name: Check for mandatory variables
+  fail:
+    msg:
+      - "Following variables required with role 'ontap_ip_interface':"
+      - "'ontap_svm_name'"
+      - "'ontap_ip_interface_name'"
+  when:
+    - (ontap_svm_name is undefined) or
+      (ontap_ip_interface_name is undefined)
+  tags:
+    - always
+
 - name: Set Connection Details
   ansible.builtin.set_fact:
     ontap_login: &ontap_login
@@ -17,47 +29,46 @@
   block:
     - name: Find SVM
       ansible.builtin.set_fact:
-        svm: "{{ item }}"
+        ontap_svm_obj: "{{ item }}"
       loop:
-        "{{ svms | list}}"
+        "{{ svms | list }}"
       when:
-        - item.name == svm_name
+        - item.name == ontap_svm_name
     - name: Find IP Interface
       ansible.builtin.set_fact:
-        ip_interface: "{{ item }}"
+        ontap_ip_interface_obj: "{{ item }}"
       loop:
-        "{{ svm.ip_interfaces | list}}"
+        "{{ ontap_svm_obj.ip_interfaces | list}}"
       when:
-        - item.name == ip_interface_name
-    - name: Include HostVars
-      ansible.builtin.set_fact:
-        "{{ item }}": "{{ ip_interface[item] }}"
-      loop:
-        "{{ ip_interface | list }}"
-      when:
-        - ip_interface[item]
+        - item.name == ontap_ip_interface_name
   tags:
-    - "source_inventory"
+    - source_inventory
 
-- name: Create LIFs
+- name: Create LIF
   na_ontap_interface:
     state:                        present
-    interface_name:               "{{ name }}"
-    vserver:                      "{{ svm_name }}"
-    address:                      "{{ ip.address }}"
-    netmask:                      "{{ ip.netmask }}"
-    service_policy:               "{{ service_policy.name }}"
-    home_node:                    "{{ location.home_node.name }}"
-    home_port:                    "{{ location.home_port.name }}"
+    interface_name:               "{{ ontap_ip_interface_name }}"
+    vserver:                      "{{ ontap_svm_name }}"
+    address:                      "{{ ontap_ip_interface_obj.ip.address }}"
+    netmask:                      "{{ ontap_ip_interface_obj.ip.netmask }}"
+    service_policy:               "{{ ontap_ip_interface_obj.service_policy.name }}"
+    home_node:                    "{{ ontap_ip_interface_obj.location.home_node.name }}"
+    home_port:                    "{{ ontap_ip_interface_obj.location.home_port.name }}"
+# FIXME - This one is ugly, but "role" must be provided as long as we have to use ZAPI here
+    role:                         "data"
     <<: *ontap_login
   tags:
-    - "create_ontap_ip_interface"
+    - create_all
+    - create_ontap_svm
+    - create_ontap_ip_interface
 
 - name: Delete LIF
   na_ontap_interface:
     state:                        absent
-    interface_name:               "{{ ip_interface_name }}"
-    vserver:                      "{{ svm_name }}"
+    interface_name:               "{{ ontap_ip_interface_name }}"
+    vserver:                      "{{ ontap_svm_name }}"
     <<: *ontap_login
   tags:
-    - "delete_ontap_ip_interface"
+    - never
+    - delete_all
+    - delete_ontap_ip_interface

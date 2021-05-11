@@ -108,3 +108,5 @@ svms:
       name:
       uuid:
     snapmirror: {}
+    volumes:
+      
