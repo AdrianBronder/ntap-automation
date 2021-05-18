@@ -85,7 +85,7 @@ ansible-galaxy collection install awx.awx:17.1.0
 
 echo "--> Install docker images"
 cat ~/ntap-automation/ntaplod_init/docker_images/awx_17_lod_db_images.tar.gz.* > ~/ntap-automation/ntaplod_init/docker_images/awx_17_lod_db_images.tar.gz
-cat ~/ntap-automation/ntaplod_init/docker_images/awx_17_lod_image.tar.gz.* > ~/ntap-automation/ntaplod_init/docker_images/awx_17_lod_db_image.tar.gz
+cat ~/ntap-automation/ntaplod_init/docker_images/awx_17_lod_image.tar.gz.* > ~/ntap-automation/ntaplod_init/docker_images/awx_17_lod_image.tar.gz
 docker load < ~/ntap-automation/ntaplod_init/docker_images/awx_17_lod_db_images.tar.gz
 docker load < ~/ntap-automation/ntaplod_init/docker_images/awx_17_lod_image.tar.gz
 

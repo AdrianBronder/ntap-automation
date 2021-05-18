@@ -9,7 +9,7 @@ If you are a customer, partner or NetApp employee:
    - Customer:       https://handsonlabs.netapp.com/lab/ontapapi
    - NetApp/Partner: https://labondemand.netapp.com/lab/sl10599
    
-2. Log into the Ansible Linux host ("ansible.demo.netapp.com") and clone this repository:
+2. Log into the Ansible Linux host **"ansible.demo.netapp.com"** with user **"ansible"** and clone this repository:
    ```
    # git clone https://github.com/AdrianBronder/ntap-automation.git
    ```
