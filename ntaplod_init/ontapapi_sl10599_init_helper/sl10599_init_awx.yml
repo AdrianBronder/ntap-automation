@@ -27,14 +27,13 @@
   collections:
     - awx.awx
 
-tasks:
-  - name: Disable Auto Download of Role Requirements
+  tasks:
+    - name: Disable Auto Download of Role Requirements
     tower_settings:
       settings:
         AWX_ROLES_ENABLED:       false
       <<: *input
 
-  tasks:
   - name: Create Organization in AWX
     tower_organization:
       state:                     present
