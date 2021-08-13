@@ -7,7 +7,7 @@ If you are a customer, partner or NetApp employee:
 
 1. Please use the virtual hands-on lab (log in with your NetApp support account):
    - Customer:       https://handsonlabs.netapp.com/lab/ontapapi
-   - NetApp/Partner: https://labondemand.netapp.com/lab/sl10599
+   - NetApp/Partner: https://labondemand.netapp.com/lab/sl10655
    
 2. Log into the Ansible Linux host ("ansible.demo.netapp.com") and clone this repository:
    ```

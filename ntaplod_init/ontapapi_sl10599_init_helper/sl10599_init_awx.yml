@@ -28,7 +28,7 @@
     - awx.awx
 
   tasks:
-    - name: Disable Auto Download of Role Requirements
+  - name: Disable Auto Download of Role Requirements
     tower_settings:
       settings:
         AWX_ROLES_ENABLED:       false
