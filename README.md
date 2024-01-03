@@ -6,8 +6,7 @@ Welcome to my collection of automation demos. In this repository you will find v
 If you are a customer, partner or NetApp employee:
 
 1. Please use the virtual hands-on lab (log in with your NetApp support account):
-   - Customer:       https://handsonlabs.netapp.com/lab/ontapapi
-   - NetApp/Partner: https://labondemand.netapp.com/lab/sl10655
+   - https://labondemand.netapp.com/search/ontapapi
    
 2. Log into the Ansible Linux host ("ansible.demo.netapp.com") and clone this repository:
    ```
@@ -31,8 +30,8 @@ If you are a customer, partner or NetApp employee:
 If you are a customer, partner or NetApp employee:
 
 1. Please use the virtual hands-on lab (log in with your NetApp support account):
-   - Customer:       https://handsonlabs.netapp.com/lab/storagegrid
-   - NetApp/Partner: https://labondemand.netapp.com/lab/sl10610
+   - Customer:       https://labondemand.netapp.com/lab/storagegrid
+   - NetApp/Partner: https://labondemand.netapp.com/lab/storagegrid-hol
    
 2. Log into the first Linux machine (Linux1) and make sure "git" utilities are installed on the machine:
    ```
